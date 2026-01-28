@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bona Studio | 묵상 제작소</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;700&display=swap"
+        rel="stylesheet">
+    <!-- 스타일시트 경로 명시 -->
+    <link rel="stylesheet" href="/studio/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Fallback Content (if CSS fails) -->
+    <noscript>Please enable JavaScript</noscript>
+    <div style="position:absolute; top:0; left:0; padding:5px; font-size:10px; opacity:0.3; pointer-events:none;">v1.0.1
+    </div>
+
+    <div class="glass-container">
+        <header class="studio-header">
+            <div class="brand">
+                <i class="fa-solid fa-church"></i>
+                <h1>Bona Studio</h1>
+            </div>
+            <nav>
+                <div style="font-size: 0.9rem; margin-right: 1rem; color: #666;">
+                    <%= today %>
+                </div>
+                <button class="btn-icon"><i class="fa-solid fa-gear"></i></button>
+            </nav>
+        </header>
+
+        <main class="dashboard-main">
+            <section class="welcome-section">
+                <h2>Peace be with you.</h2>
+                <p>오늘도 주님의 말씀을 전할 준비가 되셨나요?</p>
+                <div class="action-card" onclick="location.href='/studio/editor/<%= today %>'">
+                    <div class="card-icon"><i class="fa-solid fa-feather-pointed"></i></div>
+                    <div class="card-text">
+                        <h3>오늘의 묵상 만들기</h3>
+                        <span>
+                            <%= today %>
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="calendar-section">
+                <div class="calendar-header">
+                    <h3>Publication Schedule</h3>
+                    <div class="calendar-nav">
+                        <button class="nav-btn"
+                            onclick="location.href='/studio/?year=<%= prevYear %>&month=<%= prevMonth %>'">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <div class="month-selector">
+                            <%= currentYear %>년 <%= currentMonth %>월
+                        </div>
+                        <button class="nav-btn"
+                            onclick="location.href='/studio/?year=<%= nextYear %>&month=<%= nextMonth %>'">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                        <button class="today-btn" onclick="location.href='/studio'">
+                            오늘
+                        </button>
+                    </div>
+                </div>
+                <!-- Simple Calendar Grid Helper -->
+                <div class="calendar-grid">
+                    <div class="day-name">SUN</div>
+                    <div class="day-name">MON</div>
+                    <div class="day-name">TUE</div>
+                    <div class="day-name">WED</div>
+                    <div class="day-name">THU</div>
+                    <div class="day-name">FRI</div>
+                    <div class="day-name">SAT</div>
+
+                    <!-- Grid Logic with Real Data -->
+                    <% calendarDays.forEach(day=> { %>
+                        <% if (day.isEmpty) { %>
+                            <!-- 빈 칸 -->
+                            <div class="calendar-day empty" style="visibility: hidden;"></div>
+                            <% } else { %>
+                                <!-- 실제 날짜 -->
+                                <% const isPublished=day.card && day.card.isPublished; const statusClass=(day.isToday
+                                    ? 'today' : '' ) + (isPublished ? ' has-card' : '' ); const dayClass=day.isSunday
+                                    ? 'sunday' : (day.isSaturday ? 'saturday' : '' ); const bgStyle=isPublished &&
+                                    day.card.imageUrl ? `background-image: url('${day.card.imageUrl}');` : '' ; %>
+                                    <div class="calendar-day <%= statusClass %>" style="<%= bgStyle %>"
+                                        onclick="location.href='/studio/editor/<%= day.dateStr %>'">
+                                        <span class="date-num <%= dayClass %>">
+                                            <%= day.day %>
+                                        </span>
+
+                                        <% if (isPublished) { %>
+                                            <span class="status-dot working" title="작성됨"
+                                                style="background-color: #00b894;"></span>
+                                            <% } else if (day.isToday) { %>
+                                                <span class="status-dot" style="background-color: #ff4757;"></span>
+                                                <% } %>
+                                    </div>
+                                    <% } %>
+                                        <% }); %>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>
