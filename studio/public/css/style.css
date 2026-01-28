@@ -1,12 +1,11 @@
 :root {
-    --primary-hue: 250;
-    /* Deep Purple */
+    --primary-hue: 250; /* Deep Purple */
     --primary-color: hsl(var(--primary-hue), 60%, 50%);
     --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     --glass-bg: rgba(255, 255, 255, 0.7);
     --glass-border: 1px solid rgba(255, 255, 255, 0.8);
     --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-
+    
     --font-serif: 'Noto Serif KR', serif;
     --font-sans: 'Noto Sans KR', sans-serif;
     --font-display: 'Cinzel', serif;
@@ -50,7 +49,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 1.5rem 2.5rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
 }
 
 .brand {
@@ -109,8 +108,8 @@ body {
     gap: 1.5rem;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border: 1px solid rgba(255,255,255,0.5);
 }
 
 .action-card:hover {
@@ -146,7 +145,7 @@ body {
 /* Calendar Section */
 .calendar-section {
     flex: 1.5;
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(255,255,255,0.5);
     border-radius: 20px;
     padding: 1.5rem;
 }
@@ -174,7 +173,7 @@ body {
 
 .calendar-day {
     aspect-ratio: 1;
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255,255,255,0.6);
     border-radius: 12px;
     display: flex;
     flex-direction: column;
@@ -191,95 +190,8 @@ body {
 }
 
 .calendar-day.today {
-    border: 3px solid #ff4757;
+    border: 2px solid var(--primary-color);
     background: white;
-    box-shadow: 0 0 0 2px rgba(255, 71, 87, 0.1);
-}
-
-.calendar-day.today .date-num {
-    color: #ff4757;
-    font-weight: 700;
-}
-
-.calendar-day.has-card {
-    background-size: cover;
-    background-position: center;
-    border: 1px solid rgba(184, 134, 11, 0.3);
-}
-
-.calendar-day.has-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
-    border-radius: 12px;
-    z-index: 1;
-}
-
-.calendar-day.has-card .date-num {
-    color: #fff;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-    z-index: 2;
-}
-
-.calendar-day.has-card .status-dot {
-    z-index: 2;
-}
-
-/* 캘린더 네비게이션 */
-.calendar-nav {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.nav-btn {
-    background: rgba(255, 255, 255, 0.8);
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.nav-btn:hover {
-    background: white;
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-}
-
-.today-btn {
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 0.5rem 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-left: 0.5rem;
-}
-
-.today-btn:hover {
-    background: hsl(var(--primary-hue), 60%, 40%);
-}
-
-/* 요일별 색상 */
-.date-num.sunday {
-    color: #ff4757;
-    font-weight: 600;
-}
-
-.date-num.saturday {
-    color: #5352ed;
-    font-weight: 600;
 }
 
 .status-dot {
@@ -289,13 +201,8 @@ body {
     margin-top: 4px;
 }
 
-.status-dot.published {
-    background: #2ecc71;
-}
-
-.status-dot.working {
-    background: #f1c40f;
-}
+.status-dot.published { background: #2ecc71; }
+.status-dot.working { background: #f1c40f; }
 
 /* Editor Page Styles */
 .editor-container {
@@ -307,7 +214,7 @@ body {
 .editor-left {
     width: 45%;
     padding: 2rem;
-    border-right: 1px solid rgba(0, 0, 0, 0.05);
+    border-right: 1px solid rgba(0,0,0,0.05);
     overflow-y: auto;
 }
 
@@ -340,7 +247,7 @@ body {
     border-radius: 8px;
     font-family: var(--font-sans);
     font-size: 1rem;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255,255,255,0.8);
     transition: border 0.3s;
 }
 
@@ -388,7 +295,7 @@ textarea.input-control {
     height: 812px;
     background: white;
     border-radius: 40px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
     border: 8px solid #333;
     overflow: hidden;
     position: relative;
@@ -408,7 +315,7 @@ textarea.input-control {
     width: 600px;
     height: 100%;
     background: white;
-    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.1);
+    box-shadow: -5px 0 25px rgba(0,0,0,0.1);
     transform: translateX(100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 100;

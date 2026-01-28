@@ -309,7 +309,7 @@
 </head>
 
 <body>
-    <% if (typeof data !== "undefined" && data && data.content) { Object.assign(data, data.content); } %>
+    <% if (typeof data !=='undefined' && data && data.content) { Object.assign(data, data.content); } %>
         <div class="glass-container" style="flex-direction: row; width: 98%;">
             <!-- 좌측: 입력 패널 -->
             <div class="editor-left">
@@ -324,11 +324,28 @@
                             class="fa-solid fa-book-bible"></i> 매일미사 보기</button>
                 </div>
 
-                <form id="bonaForm">
-                    <button type="button" id="aiGenBtn" class="btn-primary"
-                        style="background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%); margin-bottom: 2rem; margin-top: 0;">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> AI 묵상 초안 생성하기
-                    </button>
+                <!-- Date Navigation (Simple Text Only) -->
+                <div
+                    style="display: flex; gap: 20px; justify-content: center; margin-bottom: 2rem; align-items: center;">
+                    <button onclick="moveDate(-1)"
+                        style="background: none; border: none; color: #888; font-size: 1.2rem; cursor: pointer; font-weight: bold; padding: 5px;">&lt;&lt;&lt;</button>
+                    <button onclick="goToDate('today')"
+                        style="background: none; border: none; color: #b8860b; font-size: 1.1rem; cursor: pointer; font-weight: bold; border-bottom: 1px solid #b8860b; padding-bottom: 2px;">오늘</button>
+                    <button onclick="moveDate(1)"
+                        style="background: none; border: none; color: #888; font-size: 1.2rem; cursor: pointer; font-weight: bold; padding: 5px;">&gt;&gt;&gt;</button>
+                </div>
+
+                <form id="editorForm">
+                    <!-- Action Buttons -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 2rem;">
+                        <button type="button" onclick="generateDraft()" class="btn-primary"
+                            style="background: #eebb11; color: #000; font-weight: 800;">
+                            ✨ 묵상초안 생성하기 (AI)
+                        </button>
+                        <button type="button" onclick="saveDraft()" class="btn-secondary">
+                            💾 저장하기 (Save)
+                        </button>
+                    </div>
 
                     <div class="input-group">
                         <label>복음 (Headline Ref)</label>
@@ -657,7 +674,7 @@
             async function startSubscription() {
                 if (!('serviceWorker' in navigator)) return alert('이 브라우저는 지원하지 않습니다.');
                 try {
-                    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+                    const reg = await navigator.serviceWorker.register('/bona/sw.js', { scope: '/bona/' });
                     const sub = await reg.pushManager.subscribe({
                         userVisibleOnly: true,
                         applicationServerKey: urlBase64ToUint8Array(VAPID_KEY)
@@ -700,10 +717,9 @@
                 if (!confirm('현재 이 브라우저를 [관리자 테스트 기기]로 등록하시겠습니까?\n(기존 관리자 기기는 덮어씌워집니다)')) return;
                 if (!('serviceWorker' in navigator)) return alert('알림 미지원');
                 try {
-                    const regs = await navigator.serviceWorker.getRegistrations();
-                    const reg = regs[0];
-                    if (!reg) return alert("먼저 [매일아침 묵상카드 받기] 버튼을 눌러 알림 구독을 완료해주세요.");
+                    const reg = await navigator.serviceWorker.ready;
                     let sub = await reg.pushManager.getSubscription();
+                    if (!sub) return alert('먼저 묵상카드 구독을 해주셔야 기기 정보를 가져올 수 있습니다.');
                     const res = await fetch('/studio/api/register-admin', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },

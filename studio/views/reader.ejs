@@ -9,6 +9,14 @@
         href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Dancing+Script:wght@400;700&family=Noto+Serif+KR:wght@400;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- KakaoTalk & Social Share Meta Tags -->
+    <meta property="og:title" content="Good Morning Bona">
+    <meta property="og:description" content="(가톨릭) 매일아침 매일미사 복음묵상">
+    <meta property="og:image"
+        content="<%= (staticData && staticData.generated_image_url) ? (staticData.generated_image_url.startsWith('http') ? staticData.generated_image_url : 'https://uconai.ddns.net/bona' + staticData.generated_image_url) : 'https://uconai.ddns.net/bona/logo.png' %>">
+    <meta property="og:url" content="https://uconai.ddns.net/bona/">
+    <meta property="og:type" content="website">
     <style>
         * {
             box-sizing: border-box;
@@ -24,37 +32,42 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 1rem;
+            overflow-x: hidden;
         }
 
         .card-container {
             width: 100%;
             max-width: 480px;
-            padding: 2rem 1.5rem;
+            padding: 1.5rem 1rem;
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
+            min-height: auto;
+            /* 화면 꽉 채우기 해제 */
+            position: relative;
         }
 
+        /* Gold Text Utility */
+        .text-gold {
+            color: #b8860b;
+            text-shadow: 0 0 8px rgba(184, 134, 11, 0.3);
+        }
+
+        /* App Header */
         .app-title {
             font-family: 'Cinzel', serif;
-            font-size: 1.8rem;
+            font-size: 1.4rem;
             color: #b8860b;
             font-weight: 700;
+            margin-top: 1rem;
             margin-bottom: 0.5rem;
+            letter-spacing: 1px;
             text-shadow: 0 0 10px rgba(184, 134, 11, 0.4);
         }
 
-        .app-subtitle {
-            color: #666;
-            font-size: 0.8rem;
-            margin-bottom: 1.5rem;
-            font-family: 'Cinzel', serif;
-            letter-spacing: 2px;
-        }
-
         .date-display {
+            font-family: 'Cinzel', serif;
             color: #b8860b;
             font-size: 0.85rem;
             margin-bottom: 1.5rem;
@@ -63,17 +76,22 @@
         }
 
         .gospel-title {
-            font-size: 1.3rem;
+            font-family: 'Noto Serif KR', serif;
+            font-size: 1.35rem;
             font-weight: 700;
             margin-bottom: 1.5rem;
             line-height: 1.4;
             color: #fff;
+            word-break: keep-all;
+            padding: 0 0.5rem;
         }
 
+        /* Gold Frame (Landscape) */
         .gold-frame-container {
-            margin: 1rem 0 1.5rem 0;
+            margin: 0.5rem 0 1.5rem 0;
             width: 100%;
-            max-width: 90%;
+            display: flex;
+            justify-content: center;
         }
 
         .gold-frame {
@@ -82,6 +100,10 @@
             padding: 4px;
             background: #fff;
             box-shadow: 0 0 15px rgba(184, 134, 11, 0.4);
+            display: inline-block;
+            line-height: 0;
+            width: 100%;
+            max-width: 90%;
         }
 
         .gold-frame img {
@@ -93,23 +115,30 @@
         }
 
         .meditation-body {
-            font-size: 0.95rem;
+            font-family: 'Noto Serif KR', serif;
+            font-size: 1rem;
             line-height: 1.8;
             margin-bottom: 2rem;
             white-space: pre-wrap;
             opacity: 0.9;
+            text-align: center;
+            color: #fff;
+            padding: 0 0.5rem;
         }
 
         .prayer-text {
-            font-size: 0.85rem;
-            color: #ccc;
+            font-family: 'Noto Serif KR', serif;
+            font-style: italic;
+            color: #cccccc;
+            font-size: 0.9rem;
             margin-bottom: 1.5rem;
+            line-height: 1.5;
             padding-top: 1rem;
             border-top: 1px solid rgba(255, 255, 255, 0.2);
             width: 80%;
-            font-style: italic;
         }
 
+        /* Button Row */
         .button-row {
             display: flex;
             gap: 0.8rem;
@@ -121,7 +150,7 @@
         .missa-link-btn,
         .subscribe-btn {
             flex: 1;
-            max-width: 200px;
+            max-width: 180px;
             padding: 0.35rem 0.5rem;
             border: 1px solid #b8860b;
             border-radius: 30px;
@@ -131,11 +160,24 @@
             background: none;
             text-align: center;
             cursor: pointer;
+            font-family: 'Noto Sans KR', sans-serif;
         }
 
+        /* Footer */
+        .footer {
+            font-family: 'Dancing Script', cursive;
+            color: #b8860b;
+            font-size: 1.4rem;
+            margin-top: auto;
+            margin-bottom: 1rem;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        /* Share Button */
         .share-btn {
             width: 100%;
-            max-width: 480px;
+            max-width: 100%;
             background: none;
             border: 1px solid #b8860b;
             color: #b8860b;
@@ -143,31 +185,27 @@
             font-size: 0.75rem;
             border-radius: 30px;
             cursor: pointer;
-            transition: none;
             margin-top: 1rem;
-        }
-
-        .footer {
-            font-family: 'Dancing Script', cursive;
-            color: #b8860b;
-            font-size: 1.2rem;
-            margin-top: auto;
+            font-family: 'Noto Sans KR', sans-serif;
         }
 
         .loading {
             color: #888;
             font-size: 1rem;
-            margin: 3rem 0;
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
         }
 
         .error {
             color: #ff6b6b;
             font-size: 0.9rem;
-            margin: 2rem 0;
+            margin: auto;
         }
 
         .hidden {
-            display: none;
+            display: none !important;
         }
 
         /* Modal Styles */
@@ -191,7 +229,7 @@
             border-radius: 24px;
             width: 90%;
             max-width: 320px;
-            padding: 1.5rem;
+            padding: 2rem 1.5rem;
             text-align: center;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
             animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -208,13 +246,27 @@
                 transform: translateY(0) scale(1);
             }
         }
+
+        .content-wrapper {
+            width: 100%;
+            /* flex: 1; 제거 -> 내용만큼만 공간 차지 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .fixed-footer-wrapper {
+            width: 100%;
+            margin-top: 2rem;
+            padding-bottom: 1rem;
+        }
     </style>
 </head>
 
 <body>
     <!-- Notification Help Modal -->
     <div id="notifHelpModal" class="modal-overlay" style="display: none;">
-        <div class="modal-card" style="padding: 2rem 1.5rem;">
+        <div class="modal-card">
             <div style="font-size: 3rem; margin-bottom: 1rem;">🔔</div>
             <h3 style="color: #b8860b; margin-bottom: 0.5rem; font-size: 1.2rem;">알림을 켜주세요!</h3>
             <p style="margin-bottom: 1.5rem; line-height: 1.6; font-size: 0.9rem; color: #ccc;">
@@ -223,25 +275,12 @@
                 <strong>알림 허용</strong>이 꼭 필요해요!
             </p>
 
-            <!-- Step 1: Lock Icon -->
             <div
                 style="background: rgba(255,255,255,0.08); padding: 1rem; border-radius: 16px; text-align: left; margin-bottom: 1rem; border: 1px solid rgba(184, 134, 11, 0.3);">
                 <div style="font-size: 0.9rem; line-height: 1.5; display: flex; align-items: flex-start; gap: 10px;">
                     <span
                         style="background: #b8860b; color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: bold; flex-shrink: 0; margin-top: 2px;">1</span>
                     <span>주소창 옆 <strong>🔒자물쇠</strong>를 누르고<br><strong>'알림'</strong>을 <strong>허용</strong>으로 켭니다.</span>
-                </div>
-            </div>
-
-            <!-- Fallback Step: Menu Dots -->
-            <div
-                style="background: rgba(184, 134, 11, 0.05); padding: 1rem; border-radius: 12px; text-align: left; margin-bottom: 1.5rem; border: 1px dashed rgba(184, 134, 11, 0.4);">
-                <p style="font-size: 0.85rem; color: #b8860b; margin-bottom: 0.5rem; font-weight: bold;">💡 자물쇠가 안 보이거나
-                    안 된다면?</p>
-                <div style="font-size: 0.8rem; color: #aaa; line-height: 1.6;">
-                    오른쪽 위 <strong>점 3개(⋮)</strong> 버튼 누르기<br>
-                    ➔ <strong>설정</strong> ➔ <strong>사이트 설정</strong><br>
-                    ➔ <strong>알림</strong> ➔ <strong>'허용'</strong>으로 바꾸기
                 </div>
             </div>
 
@@ -253,47 +292,50 @@
     </div>
 
     <div class="card-container">
-        <!-- App Header -->
-        <div class="app-title">Good Morning Bona</div>
+        <!-- 상단 콘텐츠 영역 -->
+        <div class="content-wrapper">
+            <!-- App Header -->
+            <div class="app-title">Good Morning Bona</div>
 
-        <!-- Loading State -->
-        <div id="loadingState" class="loading">
-            <i class="fa-solid fa-spinner fa-spin"></i> 오늘의 묵상을 불러오는 중...
-        </div>
+            <!-- Loading State -->
+            <div id="loadingState" class="loading">
+                <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                <div style="margin-top: 1rem;">오늘의 묵상을 불러오는 중...</div>
+            </div>
 
-        <!-- Error State -->
-        <div id="errorState" class="error hidden">
-            묵상 카드를 불러올 수 없습니다.<br>
-            <button class="subscribe-btn" onclick="location.reload()" style="margin-top: 1rem;">
-                <i class="fa-solid fa-rotate-right"></i> 다시 시도
-            </button>
-        </div>
+            <!-- Error State -->
+            <div id="errorState" class="error hidden">
+                묵상 카드를 불러올 수 없습니다.<br>
+                <button class="subscribe-btn" onclick="location.reload()" style="margin-top: 1.5rem;">
+                    <i class="fa-solid fa-rotate-right"></i> 다시 시도
+                </button>
+            </div>
 
-        <!-- Content State -->
-        <div id="contentState" class="hidden">
-            <!-- Date -->
-            <div id="dateDisplay" class="date-display"></div>
+            <!-- Content State -->
+            <div id="contentState" class="hidden" style="width: 100%;">
+                <!-- Date -->
+                <div id="dateDisplay" class="date-display"></div>
 
-            <!-- Gospel Title -->
-            <div id="gospelTitle" class="gospel-title">오늘의 말씀을 기다립니다</div>
+                <!-- Gospel Title -->
+                <div id="gospelTitle" class="gospel-title">오늘의 말씀을 기다립니다</div>
 
-            <!-- Image -->
-            <div class="gold-frame-container">
-                <div class="gold-frame">
-                    <img id="meditationImage" src="https://picsum.photos/800/450?random=1" alt="Meditation Image">
+                <!-- Image -->
+                <div class="gold-frame-container">
+                    <div class="gold-frame">
+                        <img id="meditationImage" src="" alt="Meditation Image">
+                    </div>
                 </div>
-            </div>
 
-            <!-- Meditation Body -->
-            <div id="meditationBody" class="meditation-body">
-                "묵상을 기다리는 중입니다."
-            </div>
+                <!-- Meditation Body -->
+                <div id="meditationBody" class="meditation-body"></div>
 
-            <!-- Prayer -->
-            <div id="prayerText" class="prayer-text">
-                - Bona Studio -
+                <!-- Prayer -->
+                <div id="prayerText" class="prayer-text"></div>
             </div>
+        </div>
 
+        <!-- 하단 고정 영역 (버튼 + 푸터) -->
+        <div class="fixed-footer-wrapper">
             <!-- Button Row -->
             <div class="button-row">
                 <a href="https://missa.cbck.or.kr/DailyMissa" target="_blank" class="missa-link-btn">
@@ -303,53 +345,53 @@
                     매일아침 묵상카드 받기
                 </button>
             </div>
+
+            <!-- Footer -->
+            <div class="footer">Bona Studio</div>
+
+            <!-- Share Button -->
+            <button id="shareBtn" class="share-btn">
+                전달하기
+            </button>
         </div>
-
-        <!-- Footer -->
-        <div class="footer">Bona Studio</div>
-
-        <!-- Share Button -->
-        <button id="shareBtn" class="share-btn">
-            전달하기
-        </button>
     </div>
+
+    <!-- Server Data Injection (Safe Method) -->
+    <div id="server-data" style="display:none;" data-json="<%= JSON.stringify(staticData || null) %>"></div>
 
     <script>
         const VAPID_PUBLIC_KEY = '<%= vapidPublicKey %>';
 
-        // Fetch meditation data (today or specific date)
+        // 데이터 안전하게 로드
+        try {
+            const rawData = document.getElementById('server-data').getAttribute('data-json');
+            window.__STATIC_DATA__ = rawData ? JSON.parse(rawData) : null;
+        } catch (e) {
+            console.error('Data Parse Error:', e);
+            window.__STATIC_DATA__ = null;
+        }
+
         async function loadTodaysMeditation() {
             try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const targetDate = urlParams.get('date') || 'today';
-                const response = await fetch(`/studio/api/post/${targetDate}`);
-                const result = await response.json();
-
-                if (result.success && result.data) {
-                    const data = result.data;
-
-                    // Format date as "✠ 가톨릭 매일아침 매일미사 복음묵상 YYYY. MM. DD."
-                    if (data.date) {
-                        const dateParts = data.date.split('-'); // "2026-01-28" -> ["2026", "01", "28"]
-                        const formattedDate = `✠ 가톨릭 매일아침 매일미사 복음묵상 ${dateParts[0]}. ${dateParts[1]}. ${dateParts[2]}.`;
-                        document.getElementById('dateDisplay').textContent = formattedDate;
-                    }
-
-                    // Update UI with data
-                    document.getElementById('gospelTitle').textContent = data.one_line_message || '오늘의 말씀';
-                    document.getElementById('meditationBody').textContent = data.meditation_body || '묵상 내용이 없습니다.';
-                    document.getElementById('prayerText').textContent = data.prayer_line || '- Bona Studio -';
-
-                    // Update image if available
-                    if (data.generated_image_url) {
-                        document.getElementById('meditationImage').src = data.generated_image_url;
-                    }
-
-                    // Show content, hide loading
-                    document.getElementById('loadingState').classList.add('hidden');
-                    document.getElementById('contentState').classList.remove('hidden');
+                let data = null;
+                if (window.__STATIC_DATA__) {
+                    data = window.__STATIC_DATA__;
+                    console.log('[Reader] Using static data');
                 } else {
-                    throw new Error('No data available');
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const targetDate = urlParams.get('date') || 'today';
+                    const response = await fetch(`/bona/studio/api/post/${targetDate}`);
+                    const result = await response.json();
+                    if (result.success && result.data) {
+                        data = result.data;
+                    } else {
+                        throw new Error('No data available');
+                    }
+                }
+
+                if (data) {
+                    const finalData = (data.content) ? { ...data, ...data.content } : data;
+                    renderData(finalData);
                 }
             } catch (error) {
                 console.error('Failed to load meditation:', error);
@@ -358,12 +400,37 @@
             }
         }
 
-        // Service Worker Registration
+        function renderData(data) {
+            // Format date: "✠ 가톨릭 매일아침 매일미사 복음묵상 YYYY. MM. DD."
+            if (data.date) {
+                const dateParts = data.date.split('-');
+                const formattedDate = `✠ 가톨릭 매일아침 매일미사 복음묵상 ${dateParts[0]}. ${dateParts[1]}. ${dateParts[2]}.`;
+                document.getElementById('dateDisplay').textContent = formattedDate;
+            }
+
+            document.getElementById('gospelTitle').textContent = data.one_line_message || '오늘의 말씀';
+            document.getElementById('meditationBody').textContent = data.meditation_body || '';
+            document.getElementById('prayerText').textContent = data.prayer_line || '- Bona Studio -';
+
+            if (data.generated_image_url) {
+                let imgUrl = data.generated_image_url;
+                if (imgUrl.startsWith('/studio/')) {
+                    imgUrl = '/bona' + imgUrl;
+                }
+                document.getElementById('meditationImage').src = imgUrl;
+                document.querySelector('.gold-frame-container').style.display = 'flex';
+            } else {
+                document.querySelector('.gold-frame-container').style.display = 'none';
+            }
+
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('contentState').classList.remove('hidden');
+        }
+
         async function registerServiceWorker() {
             if ('serviceWorker' in navigator) {
                 try {
                     const reg = await navigator.serviceWorker.register('/bona/sw.js', { scope: '/bona/' });
-                    console.log('SW Registered:', reg);
                     return reg;
                 } catch (e) {
                     console.error('SW Error:', e);
@@ -372,7 +439,6 @@
             return null;
         }
 
-        // Subscribe User
         async function subscribeUser() {
             const reg = await registerServiceWorker();
             if (!reg) return alert('서비스 워커 등록 실패');
@@ -383,7 +449,7 @@
                     applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
                 });
 
-                await fetch('/studio/api/subscribe', {
+                await fetch('/bona/studio/api/subscribe', {
                     method: 'POST',
                     body: JSON.stringify(sub),
                     headers: { 'Content-Type': 'application/json' }
@@ -392,61 +458,45 @@
                 alert('✅ 구독 완료! 매일 아침 묵상 카드를 받으실 수 있습니다.');
                 document.getElementById('subscribeBtn').innerHTML = '<i class="fa-solid fa-check"></i> 구독 완료';
                 document.getElementById('subscribeBtn').disabled = true;
-
             } catch (e) {
                 console.error(e);
                 showNotifModal();
             }
         }
 
-        function showNotifModal() {
-            document.getElementById('notifHelpModal').style.display = 'flex';
-        }
-
-        function closeNotifModal() {
-            document.getElementById('notifHelpModal').style.display = 'none';
-        }
+        function showNotifModal() { document.getElementById('notifHelpModal').style.display = 'flex'; }
+        function closeNotifModal() { document.getElementById('notifHelpModal').style.display = 'none'; }
 
         function urlBase64ToUint8Array(base64String) {
             const padding = '='.repeat((4 - base64String.length % 4) % 4);
             const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
             const rawData = window.atob(base64);
             const outputArray = new Uint8Array(rawData.length);
-            for (let i = 0; i < rawData.length; ++i) {
-                outputArray[i] = rawData.charCodeAt(i);
-            }
+            for (let i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
             return outputArray;
         }
 
-        // Share functionality
         async function shareMeditation() {
-            // Include date query parameter if it exists
             const urlParams = new URLSearchParams(window.location.search);
             const targetDate = urlParams.get('date');
             let currentUrl = window.location.origin + window.location.pathname;
-            if (targetDate) {
-                currentUrl += `?date=${targetDate}`;
-            }
+            if (targetDate) currentUrl += `?date=${targetDate}`;
 
             const shareData = {
-                title: 'Good Morning Bona - 가톨릭 매일미사 복음묵상',
-                text: '오늘의 복음 묵상을 함께 나눠요 🙏',
+                title: 'Good Morning Bona',
+                text: '(가톨릭) 매일아침 매일미사 복음묵상',
                 url: currentUrl
             };
 
             try {
-                // Check if Web Share API is supported
                 if (navigator.share) {
                     await navigator.share(shareData);
                 } else {
-                    // Fallback: Copy to clipboard
                     await navigator.clipboard.writeText(currentUrl);
                     alert('✅ 링크가 복사되었습니다!\n카카오톡이나 문자로 붙여넣기 하세요.');
                 }
             } catch (err) {
-                // If sharing was cancelled or failed
                 if (err.name !== 'AbortError') {
-                    // Try clipboard as last resort
                     try {
                         await navigator.clipboard.writeText(currentUrl);
                         alert('✅ 링크가 복사되었습니다!\n카카오톡이나 문자로 붙여넣기 하세요.');
@@ -457,11 +507,8 @@
             }
         }
 
-        // Event Listeners
         document.getElementById('subscribeBtn').addEventListener('click', subscribeUser);
         document.getElementById('shareBtn').addEventListener('click', shareMeditation);
-
-        // Load meditation on page load
         window.addEventListener('DOMContentLoaded', loadTodaysMeditation);
     </script>
 </body>

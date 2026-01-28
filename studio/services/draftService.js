@@ -29,25 +29,33 @@ class DraftService {
 
         let gospelText = "";
         try {
-            // A. 크롤링 수행
+            // A. 크롤링 수행 (가장 높은 우선순위)
             const missaData = await crawlerService.fetchDailyMissa(today);
-            if (missaData) {
-                if (missaData.headline_ref) draft.content.headline_ref = missaData.headline_ref;
-                if (missaData.one_line_message) draft.content.one_line_message = missaData.one_line_message;
+            if (missaData && missaData.headline_ref && missaData.headline_ref !== "크롤링 오류") {
+                draft.content.headline_ref = missaData.headline_ref;
+                draft.content.one_line_message = missaData.one_line_message;
                 gospelText = missaData.gospel_text || "";
                 draft.raw_text_summary = gospelText.substring(0, 100);
+                console.log(`[Draft] Successfully crawled for ${today}: ${draft.content.headline_ref}`);
             }
         } catch (e) {
             console.error('[Draft] Crawler Error:', e.message);
-            draft.content.headline_ref = "데이터 로딩 실패";
         }
 
         try {
             // B. AI 생성 수행
-            if (gospelText.length > 10) {
-                // 1. Text Generation
+            if (gospelText.length > 20) {
+                // 1. Text Generation (크롤링된 복음 본문을 기반으로)
                 const aiRes = await aiService.generateDraft(gospelText);
                 if (aiRes) {
+                    // 크롤링에 실패했을 때만 AI가 만든 제목/구절을 사용 (Fallback)
+                    if (!draft.content.headline_ref || draft.content.headline_ref === "오늘의 복음") {
+                        draft.content.headline_ref = aiRes.headline_ref || "";
+                    }
+                    if (!draft.content.one_line_message || draft.content.one_line_message === "오늘의 말씀") {
+                        draft.content.one_line_message = aiRes.one_line_message || "";
+                    }
+
                     draft.content.meditation_body = aiRes.meditation_body || "";
                     draft.content.prayer_line = aiRes.prayer_line || "";
                     draft.content.image_prompt_scenery = aiRes.image_prompt_scenery || "";

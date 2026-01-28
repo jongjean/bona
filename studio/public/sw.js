@@ -1,11 +1,17 @@
 self.addEventListener('push', function (event) {
-    const data = event.data.json();
-    const title = 'Good Morning Bona';
+    let data = {};
+    if (event.data) {
+        data = event.data.json();
+    }
+
+    const title = data.title || 'Good Morning Bona';
     const options = {
-        body: data.message || '오늘의 말씀이 도착했습니다.',
-        icon: 'https://cdn-icons-png.flaticon.com/512/2913/2913584.png', // 십자가 아이콘
-        badge: 'https://cdn-icons-png.flaticon.com/512/2913/2913584.png',
-        data: { url: '/bona' } // 클릭 시 이동 주소
+        body: data.body || '오늘의 말씀이 도착했습니다.',
+        icon: data.icon || '/bona/assets/icon-192.png',
+        badge: '/bona/assets/icon-192.png',
+        data: {
+            url: data.url || '/bona/'
+        }
     };
 
     event.waitUntil(self.registration.showNotification(title, options));

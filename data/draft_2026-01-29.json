@@ -1,13 +1,9 @@
 {
   "date": "2026-01-29",
-  "status": "draft",
-  "content": {
-    "headline_ref": "마르코 4,21-25",
-    "one_line_message": "등불은 등경 위에 놓는다. 너희가 되어서 주는 만큼 되어서 받을 것이다.",
-    "meditation_body": "등불은 등경 위에 빛나리라\n숨은 것도 드러나리라\n귀 있는 자, 들으라\n주는 만큼 받으리라\n가진 자 더 받으리\n없는 자 빼앗기리라",
-    "image_prompt_scenery": "A serene Baroque-style sacred painting, a humble oil lamp glowing brightly on a simple wooden stand in a dim room, soft divine light illuminating hidden corners, symbolic of revelation and grace, warm chiaroscuro lighting, reverent atmosphere.",
-    "prayer_line": "주님, 빛을 숨기지 않고 나누게 하소서.",
-    "generated_image_url": "https://image.pollinations.ai/prompt/A%20serene%20Baroque-style%20sacred%20painting%2C%20a%20humble%20oil%20lamp%20glowing%20brightly%20on%20a%20simple%20wooden%20stand%20in%20a%20dim%20room%2C%20soft%20divine%20light%20illuminating%20hidden%20corners%2C%20symbolic%20of%20revelation%20and%20grace%2C%20warm%20chiaroscuro%20lighting%2C%20reverent%20atmosphere.%2C%20detailed%2C%20masterpiece%2C%20religious%20art%2C%20golden%20light%2C%20oil%20painting%20style?width=1024&height=576&model=flux&nologo=true"
-  },
-  "raw_text_summary": "그때에 예수님께서 군중에게 21 말씀하셨다. “누가 등불을 가져다가 함지 속이나 침상 밑에 놓겠느냐? 등경 위에 놓지 않느냐? 22 숨겨진 것도 드러나기 마련이고 감추어진 것도 드"
+  "headline_ref": "마르코 4,21-25",
+  "one_line_message": "등불은 등경 위에 놓는다. 너희가 되어서 주는 만큼 되어서 받을 것이다.",
+  "meditation_body": "등불은 등경 위에 빛나리라\n숨겨진 것도 드러나리라\n들을 귀 있는 자, 들으라\n주는 만큼 받으리라\n가진 자 더 받으리라\n빈 자 빼앗기리라",
+  "prayer_line": "주님, 제 빛을 세상에 드러내게 하소서.",
+  "image_prompt_scenery": "A serene Baroque-style sacred painting of a radiant oil lamp on a tall stand in a dim room, soft divine light illuminating humble clay jars and a simple bed, symbolic of hidden things being revealed, with a gentle hand reaching to adjust the light, in the style of Caravaggio's chiaroscuro.",
+  "generated_image_url": "/studio/uploads/cards/card_2026-01-29.jpg"
 }
