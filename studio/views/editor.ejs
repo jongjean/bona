@@ -762,21 +762,53 @@
             }
 
             async function registerAsAdmin() {
-                if (!confirm('현재 이 브라우저를 [관리자 테스트 기기]로 등록하시겠습니까?\n(기존 관리자 기기는 덮어씌워집니다)')) return;
-                if (!('serviceWorker' in navigator)) return alert('알림 미지원');
+                if (!confirm('현재 이 브라우저를 [관리자 테스트 기기]로 등록하시겠습니까?')) return;
+
                 try {
-                    const reg = await navigator.serviceWorker.ready;
+                    console.log('[AdminReg] 권한 요청 시작...');
+                    const permission = await Notification.requestPermission();
+                    if (permission !== 'granted') {
+                        alert('❌ 알림 권한이 허용되지 않았습니다. 브라우저 설정에서 허용해 주세요.');
+                        return;
+                    }
+
+                    console.log('[AdminReg] 서비스 워커 등록 중...');
+                    // 스튜디오 폴더 내의 sw.js를 사용하여 범위(scope) 문제를 해결
+                    const reg = await navigator.serviceWorker.register('/studio/sw.js');
+                    await navigator.serviceWorker.ready;
+                    console.log('[AdminReg] 서비스 워커 준비 완료');
+
+                    // 기존 구독 해지 (열쇠 갱신 강제)
                     let sub = await reg.pushManager.getSubscription();
-                    if (!sub) return alert('먼저 묵상카드 구독을 해주셔야 기기 정보를 가져올 수 있습니다.');
+                    if (sub) {
+                        console.log('[AdminReg] 기존 구독 해지 중...');
+                        await sub.unsubscribe();
+                    }
+
+                    console.log('[AdminReg] 새 구독 생성 중...');
+                    sub = await reg.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(VAPID_KEY)
+                    });
+
+                    console.log('[AdminReg] 서버에 등록 중...');
                     const res = await fetch('/studio/api/register-admin', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(sub)
                     });
                     const json = await res.json();
-                    if (json.success) alert('✅ 등록 완료! 이제 [시험 발송]은 이 기기로만 옵니다.');
-                    else alert('등록 실패: ' + json.error);
-                } catch (e) { alert('오류: ' + e.message); }
+
+                    if (json.success) {
+                        alert('✅ 관리자 등록 성공! 이제 시험 발송이 가능합니다.');
+                        location.reload(); // 정보 갱신을 위해 새로고침
+                    } else {
+                        alert('❌ 등록 실패: ' + json.error);
+                    }
+                } catch (e) {
+                    console.error('[AdminReg] Error:', e);
+                    alert('❌ 시스템 오류: ' + e.message);
+                }
             }
 
             async function publishTest() {

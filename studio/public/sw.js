@@ -7,8 +7,6 @@ self.addEventListener('push', function (event) {
     const title = data.title || 'Good Morning Bona';
     const options = {
         body: data.body || '오늘의 말씀이 도착했습니다.',
-        icon: data.icon || '/bona/assets/icon-192.png',
-        badge: '/bona/assets/icon-192.png',
         data: {
             url: data.url || '/bona/'
         }

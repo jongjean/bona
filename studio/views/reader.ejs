@@ -373,7 +373,7 @@
     <div id="shareModal" class="modal-overlay hidden" onclick="if(event.target === this) closeShareModal()">
         <div class="modal-card" style="padding: 1.5rem; max-width: 300px;">
             <h3 style="color: #b8860b; margin-bottom: 1.5rem; font-size: 1.1rem;">어디로 전달할까요?</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
                 <!-- KakaoTalk -->
                 <button onclick="handleShare('kakao')"
                     style="background:none; border:none; cursor:pointer; color:#fff;">
@@ -381,7 +381,7 @@
                         style="background:#FEE500; width:50px; height:50px; border-radius:50%; margin:auto; display:flex; align-items:center; justify-content:center; color:#000; font-size:1.5rem; margin-bottom:5px;">
                         <i class="fa-solid fa-comment"></i>
                     </div>
-                    <span style="font-size:0.8rem;">카카오톡</span>
+                    <span style="font-size:0.75rem;">카카오톡</span>
                 </button>
                 <!-- SMS -->
                 <button onclick="handleShare('sms')" style="background:none; border:none; cursor:pointer; color:#fff;">
@@ -389,25 +389,15 @@
                         style="background:#4cd137; width:50px; height:50px; border-radius:50%; margin:auto; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.5rem; margin-bottom:5px;">
                         <i class="fa-solid fa-envelope"></i>
                     </div>
-                    <span style="font-size:0.8rem;">문자메시지</span>
+                    <span style="font-size:0.75rem;">문자메세지</span>
                 </button>
-                <!-- Facebook -->
-                <button onclick="handleShare('facebook')"
-                    style="background:none; border:none; cursor:pointer; color:#fff;">
+                <!-- Copy -->
+                <button onclick="handleShare('copy')" style="background:none; border:none; cursor:pointer; color:#fff;">
                     <div
-                        style="background:#1877F2; width:50px; height:50px; border-radius:50%; margin:auto; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.5rem; margin-bottom:5px;">
-                        <i class="fa-brands fa-facebook-f"></i>
+                        style="background:#6c5ce7; width:50px; height:50px; border-radius:50%; margin:auto; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.5rem; margin-bottom:5px;">
+                        <i class="fa-solid fa-copy"></i>
                     </div>
-                    <span style="font-size:0.8rem;">페이스북</span>
-                </button>
-                <!-- Instagram -->
-                <button onclick="handleShare('instagram')"
-                    style="background:none; border:none; cursor:pointer; color:#fff;">
-                    <div
-                        style="background:linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); width:50px; height:50px; border-radius:50%; margin:auto; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.5rem; margin-bottom:5px;">
-                        <i class="fa-brands fa-instagram"></i>
-                    </div>
-                    <span style="font-size:0.8rem;">인스타그램</span>
+                    <span style="font-size:0.75rem;">복사하기</span>
                 </button>
             </div>
             <button onclick="closeShareModal()"
@@ -489,7 +479,8 @@
                 </div>
 
                 <!-- [Editable Prayer Text] -->
-                <div id="prayerText" class="prayer-text" contenteditable="true" spellcheck="false"></div>
+                <div id="prayerText" class="prayer-text" contenteditable="true" spellcheck="false" data-gramm="false">
+                </div>
             </div>
         </div>
 
@@ -563,10 +554,12 @@
 
             // [Custom Prayer Check]
             const urlParams = new URLSearchParams(window.location.search);
-            const customPrayer = urlParams.get('prayer');
+            let customPrayer = urlParams.get('prayer');
             const prayerEl = document.getElementById('prayerText');
 
             if (customPrayer) {
+                // [Fix] URL에 밑줄이 포함되어 있다면 공백으로 복원해서 표시
+                customPrayer = customPrayer.replace(/_/g, ' ');
                 prayerEl.innerText = customPrayer;
                 // 커스텀 기도 표시
                 prayerEl.style.color = "#ebd095";
@@ -663,9 +656,27 @@
 
         // [Share Button Click Hook]
         // [Share Button Click Hook]
-        function shareMeditation() {
-            window.currentShareData = prepareShareData();
+        // [Share Button Click Hook]
+        async function shareMeditation() {
+            const data = prepareShareData();
+            window.currentShareData = data;
+
+            // 모달 열 때 미리 단축 링크 준비 (클립보드 동기화 동작 보장 위해)
             document.getElementById('shareModal').classList.remove('hidden');
+
+            try {
+                const res = await fetch('/bona/studio/api/shorten', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date: data.date, prayer: data.prayer })
+                });
+                if (!res.ok) throw new Error('API Error');
+                const json = await res.json();
+                window.currentShareUrl = json.shortUrl || `https://uconai.ddns.net/bona/studio/s/${json.id}`;
+            } catch (e) {
+                console.error('Shorten Error:', e);
+                window.currentShareUrl = `https://uconai.ddns.net/bona/studio/share?date=${data.date}&prayer=${encodeURIComponent(data.prayer)}`;
+            }
         }
 
         function closeShareModal() {
@@ -675,65 +686,102 @@
 
         function prepareShareData() {
             const urlParams = new URLSearchParams(window.location.search);
-            const targetDate = urlParams.get('date');
+            // [Fix] KST 오늘 날짜 계산
+            const kstDate = new Date(Date.now() + 1000 * 60 * 60 * 9).toISOString().split('T')[0];
+            const date = urlParams.get('date') || kstDate;
 
             const prayerEl = document.getElementById('prayerText');
-            // innerText 안전하게 가져오기
-            const currentPrayer = prayerEl.innerText.replace(/\n\s*\n/g, '\n\n').trim();
+            // innerText가 현재 편집 중인 텍스트를 가장 잘 가져옴
+            const prayer = (prayerEl.innerText || '').trim();
             const originalPrayer = (prayerEl.getAttribute('data-original') || '').trim();
 
-            // [Fix] Stateless SSR을 위한 엔드포인트 사용
-            // 이 주소로 가면 Node.js가 즉석에서 OG 태그를 붙여줌
-            let finalUrl = 'https://uconai.ddns.net/bona/studio/share';
-
-            let queryParts = [];
-            if (targetDate) queryParts.push(`date=${targetDate}`);
-
-            // 수정된 기도문이 있으면 쿼리 파라미터에 직접 포함 (긴 주소)
-            if (currentPrayer && currentPrayer !== originalPrayer) {
-                queryParts.push(`prayer=${encodeURIComponent(currentPrayer)}`);
-            }
-
-            if (queryParts.length > 0) finalUrl += '?' + queryParts.join('&');
-            
-            // [Fix] 카카오톡 캐시 방지용 타임스탬프 추가
-            finalUrl += (finalUrl.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
-
-            // 3줄 요약 포맷 유지
-            const text = `{가톨릭} 매일아침 매일미사 복음묵상\n오늘의 묵상기도 카드를 확인하세요\n${finalUrl}`;
-
-            return { url: finalUrl, text: text };
+            console.log('Prepared Prayer (Latest):', prayer);
+            return { date, prayer, originalPrayer };
         }
 
         async function handleShare(type) {
-            const data = window.currentShareData;
+            try {
+                // 한 번 더 최신 데이터를 긁어와서 업데이트 (마지막에 수정한 내용 반영)
+                const latestData = prepareShareData();
+                window.currentShareData = latestData;
 
-            if (type === 'sms') {
-                location.href = `sms:?body=${encodeURIComponent(data.text)}`;
-                setTimeout(closeShareModal, 1000);
-            }
-            else if (type === 'facebook') {
-                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(data.url)}`, '_blank');
-                setTimeout(closeShareModal, 1000);
-            }
-            else if (type === 'kakao') {
-                try {
-                    await navigator.clipboard.writeText(data.text);
-                    alert('✅ 내용이 복사되었습니다.\n카카오톡 대화창에 [붙여넣기] 하세요.');
-                    setTimeout(() => { location.href = 'kakaotalk://'; }, 100);
-                } catch (err) {
-                    prompt('아래 텍스트를 복사해서 보내세요:', data.text);
+                const data = window.currentShareData;
+                if (!data) {
+                    alert('공유할 데이터를 찾을 수 없습니다.');
+                    return;
                 }
-                setTimeout(closeShareModal, 500);
+
+                const prayer = data.prayer;
+                const shareUrl = window.currentShareUrl || `https://uconai.ddns.net/bona/studio/share?date=${data.date}&prayer=${encodeURIComponent(prayer)}`;
+                const shareText = `{가톨릭} 매일아침 매일미사 복음묵상\n\n"${prayer}"\n\n오늘의 묵상기도 카드를 확인하세요\n${shareUrl}`;
+
+                console.log('Sharing type:', type, 'Prayer:', prayer, 'URL:', shareUrl);
+
+                if (type === 'kakao') {
+                    await copyToClipboard(shareText);
+                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                    if (isMobile) {
+                        alert('✅ 내용이 복사되었습니다.\n카카오톡을 열어 [붙여넣기] 하세요.');
+                        window.location.href = 'kakaotalk://';
+                    } else {
+                        alert('✅ 내용이 복사되었습니다.\n카카오톡에 [붙여넣기] 하세요.');
+                    }
+                } else if (type === 'sms') {
+                    await copyToClipboard(shareText);
+                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                    if (isMobile) {
+                        alert('✅ 내용이 복사되었습니다.\n문자 앱을 열어 [붙여넣기] 하세요.');
+                        window.location.href = 'sms:';
+                    } else {
+                        alert('✅ 내용이 복사되었습니다.\n문자 앱에 [붙여넣기] 하세요.');
+                    }
+                } else if (type === 'copy') {
+                    const success = await copyToClipboard(shareText);
+                    if (success) {
+                        alert('✅ 공유 메시지가 복사되었습니다.\n원하는 곳에 붙여넣기 하세요.');
+                    } else {
+                        alert('❌ 복사에 실패했습니다.\n수동으로 복사해주세요.');
+                    }
+                }
+            } catch (err) {
+                console.error('Share Error:', err);
+                alert('오류가 발생했습니다: ' + err.message);
             }
-            else if (type === 'instagram') {
+            closeShareModal();
+        }
+
+        async function copyToClipboard(text) {
+            // Modern API
+            if (navigator.clipboard && navigator.clipboard.writeText) {
                 try {
-                    await navigator.clipboard.writeText(data.text);
-                    alert('✅ 내용이 복사되었습니다.\n인스타그램을 열어 붙여넣기 하세요.');
-                    setTimeout(() => { location.href = 'instagram://'; }, 100);
-                } catch (err) { }
-                setTimeout(closeShareModal, 500);
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                } catch (e) {
+                    console.warn('Navigator clipboard failed, trying fallback');
+                }
             }
+
+            // Fallback (Textarea)
+            const t = document.createElement("textarea");
+            t.value = text;
+            t.style.position = 'fixed';
+            t.style.left = '-9999px';
+            t.style.top = '0';
+            t.setAttribute('readonly', ''); // Mobile keyboard prevention
+            document.body.appendChild(t);
+            t.focus();
+            t.select();
+            t.setSelectionRange(0, 99999); // iOS support
+
+            let successful = false;
+            try {
+                successful = document.execCommand('copy');
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+            }
+
+            document.body.removeChild(t);
+            return successful;
         }
 
         function checkSubscription() {
