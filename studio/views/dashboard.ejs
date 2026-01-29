@@ -141,7 +141,12 @@
             font-size: 0.9rem;
         }
 
-        /* Calendar Section */
+        .calendar-section {
+            transition: opacity 0.3s ease;
+            touch-action: pan-y pinch-zoom;
+            /* 수평 스와이프 간섭 방지 */
+        }
+
         .calendar-header {
             display: flex;
             justify-content: space-between;
