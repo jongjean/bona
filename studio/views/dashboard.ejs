@@ -573,7 +573,7 @@
                     grid.innerHTML = headerHTML + daysHTML;
 
                     // 주소창 업데이트 (페이지 점프 방지하면서 URL만 변경)
-                    window.history.pushState({}, '', `/studio/?year=${y}&month=${m}`);
+                    window.history.pushState({}, '', `${window.location.pathname}?year=${y}&month=${m}`);
                 }
             } catch (e) {
                 console.error('[AJAX] Update Failed:', e);
@@ -622,6 +622,12 @@
                     else updateCalendar(nextYear, nextMonth);
                 });
             });
+
+            // 오늘 버튼도 주소 문제 해결
+            const todayBtn = document.querySelector('.today-btn');
+            if (todayBtn) {
+                todayBtn.setAttribute('onclick', `location.href='${window.location.pathname}'`);
+            }
         });
 
         function openAdminModal() { document.getElementById('adminModal').classList.add('open'); }
