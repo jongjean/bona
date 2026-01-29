@@ -505,6 +505,43 @@
     </style>
 
     <script>
+        const PREV_URL = '/studio/?year=<%= prevYear %>&month=<%= prevMonth %>';
+        const NEXT_URL = '/studio/?year=<%= nextYear %>&month=<%= nextMonth %>';
+
+        let touchstartX = 0;
+        let touchendX = 0;
+
+        function checkDirection() {
+            const diffX = touchendX - touchstartX;
+            const threshold = 70; // 충분히 밀었을 때만 작동
+
+            if (Math.abs(diffX) > threshold) {
+                if (touchendX > touchstartX) {
+                    // 오른쪽으로 스와이프: 이전 달로
+                    console.log('[Calendar] Swiped Right -> Prev Month');
+                    location.href = PREV_URL;
+                } else {
+                    // 왼쪽으로 스와이프: 다음 달로
+                    console.log('[Calendar] Swiped Left -> Next Month');
+                    location.href = NEXT_URL;
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const calendar = document.querySelector('.calendar-section');
+            if (calendar) {
+                calendar.addEventListener('touchstart', e => {
+                    touchstartX = e.changedTouches[0].screenX;
+                }, { passive: true });
+
+                calendar.addEventListener('touchend', e => {
+                    touchendX = e.changedTouches[0].screenX;
+                    checkDirection();
+                }, { passive: true });
+            }
+        });
+
         function openAdminModal() { document.getElementById('adminModal').classList.add('open'); }
         function closeAdminModal() { document.getElementById('adminModal').classList.remove('open'); document.getElementById('subListArea').style.display = 'none'; }
 
