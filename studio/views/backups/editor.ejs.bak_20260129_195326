@@ -722,7 +722,7 @@
             async function startSubscription() {
                 if (!('serviceWorker' in navigator)) return alert('이 브라우저는 지원하지 않습니다.');
                 try {
-                    const reg = await navigator.serviceWorker.register('/studio/sw.js', { scope: '/bona/' });
+                    const reg = await navigator.serviceWorker.register('/bona/sw.js', { scope: '/bona/' });
                     const sub = await reg.pushManager.subscribe({
                         userVisibleOnly: true,
                         applicationServerKey: urlBase64ToUint8Array(VAPID_KEY)

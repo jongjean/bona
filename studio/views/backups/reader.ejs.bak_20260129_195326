@@ -594,7 +594,7 @@
         async function registerServiceWorker() {
             if ('serviceWorker' in navigator) {
                 try {
-                    return await navigator.serviceWorker.register('/studio/sw.js', { scope: '/bona/' });
+                    return await navigator.serviceWorker.register('/bona/sw.js', { scope: '/bona/' });
                 } catch (e) { }
             }
             return null;

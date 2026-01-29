@@ -491,24 +491,17 @@ app.get('/studio/api/vapid-key', (req, res) => {
     res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
 });
 
-// API: Get Subscriber Count & List (Admin)
+// API: Get Subscribers (관리자용)
 app.get('/studio/api/subscribers', (req, res) => {
     try {
+        let subs = [];
         if (fs.existsSync(SUBS_FILE)) {
-            const subs = JSON.parse(fs.readFileSync(SUBS_FILE));
-            res.json({ success: true, count: subs.length, list: subs });
-        } else {
-            res.json({ success: true, count: 0, list: [] });
+            subs = JSON.parse(fs.readFileSync(SUBS_FILE));
         }
+        res.json({ success: true, count: subs.length, list: subs });
     } catch (e) {
-        res.json({ success: false, error: e.message });
+        res.status(500).json({ success: false, error: e.message });
     }
-});
-
-// [3.3] API: Manual Deployment Trigger
-app.post('/studio/api/deploy', async (req, res) => {
-    const result = await deployToWebFolder();
-    res.json(result);
 });
 
 const ADMIN_SUB_FILE = path.join(DATA_DIR, 'admin_sub.json');
@@ -595,50 +588,6 @@ app.post('/studio/api/publish', async (req, res) => {
 });
 
 
-/**
- * [3.1] 배포 엔진: 원천 소스(public)를 웹 폴더(www)로 안전하게 동기화
- * 사용자 설계 원칙인 "매일 비우고 다시 채우기"를 안전한 원자적 스와핑(Atomic Swap)으로 구현
- */
-async function deployToWebFolder() {
-    const { execSync } = require('child_process');
-    const sourceDir = path.join(__dirname, 'public/');
-    const destDir = '/var/www/bona/';
-    const tempDir = '/var/www/bona_new/';
-
-    console.log(`[Deployer] 배포 프로세스 시작: ${sourceDir} -> ${destDir}`);
-
-    try {
-        // 1. 보안 검증: 대상 경로가 올바른지 체크
-        if (!destDir.startsWith('/var/www/bona')) {
-            throw new Error('배포 대상 경로가 올바르지 않습니다.');
-        }
-
-        // 2. 임시 폴더에 먼저 준비 (원본을 건드리기 전 안전 확보)
-        if (fs.existsSync(tempDir)) execSync(`rm -rf ${tempDir}`);
-        fs.mkdirSync(tempDir, { recursive: true });
-
-        // 3. 마스터 리소스를 임시 폴더로 복사
-        console.log(`[Deployer] 임시 대기열에 리소스 준비 중...`);
-        execSync(`cp -r ${sourceDir}* ${tempDir}`);
-
-        // 4. [핵심] 기존 웹 폴더를 완전히 비우고 새 리소스로 즉시 교체
-        console.log(`[Deployer] 웹 폴더 초기화 및 최신본 교체 시작...`);
-        execSync(`rm -rf ${destDir}*`);
-        execSync(`mv ${tempDir}* ${destDir}`);
-
-        // 5. 뒷정리 및 권한 설정
-        if (fs.existsSync(tempDir)) execSync(`rm -rf ${tempDir}`);
-        execSync(`chown -R ucon:ucon ${destDir}`);
-
-        console.log(`[Deployer] 배포 성공: 웹 폴더가 최신 상태로 갱신되었습니다.`);
-        return { success: true };
-    } catch (error) {
-        console.error(`[Deployer] 배포 중 심각한 오류 발생:`, error.message);
-        try { if (fs.existsSync(tempDir)) execSync(`rm -rf ${tempDir}`); } catch (e) { }
-        return { success: false, error: error.message };
-    }
-}
-
 // --- Scheduler: Daily 6:00 AM Auto-Publish ---
 let lastAutoPublishDate = ''; // 중복 발송 방지용
 
@@ -695,10 +644,6 @@ setInterval(async () => {
 
                 // 발송 완료 마킹
                 lastAutoPublishDate = dateStr;
-
-                // [3.2] 매일 아침 6시 웹 폴더 자동 동기화 (설계 원칙 반영)
-                console.log(`[Scheduler] 자동 배포 시작...`);
-                await deployToWebFolder();
             } else {
                 console.log(`[Scheduler] No draft found for ${dateStr}. Skipping.`);
                 lastAutoPublishDate = dateStr; // 파일 없어도 재시도 멈춤 (내일 다시)

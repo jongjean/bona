@@ -393,6 +393,15 @@
                     <i class="fa-solid fa-chevron-right arrow"></i>
                 </button>
 
+                <button class="menu-item" onclick="triggerDeployment()">
+                    <div class="icon-box"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                    <div class="text-box">
+                        <h3>웹 서비스 동기화</h3>
+                        <p>현재 소스를 웹 폴더로 즉시 배포</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right arrow"></i>
+                </button>
+
                 <!-- 추가 메뉴 확장 가능 -->
             </div>
 
@@ -511,8 +520,11 @@
 
     <script>
         // 초기 데이터 (서버에서 주입)
-        let currentYear = <%= currentYear %>;
-        let currentMonth = <%= currentMonth %>;
+        let currentYear = parseInt('<%= currentYear %>') || new Date().getFullYear();
+        let currentMonth = parseInt('<%= currentMonth %>') || (new Date().getMonth() + 1);
+        const realToday = '<%= today %>'; // "YYYY-MM-DD"
+        const [todayYear, todayMonth] = realToday.split('-').map(num => parseInt(num));
+
         let prevYear = <%= prevYear %>, prevMonth = <%= prevMonth %>;
         let nextYear = <%= nextYear %>, nextMonth = <%= nextMonth %>;
 
@@ -573,7 +585,7 @@
                     grid.innerHTML = headerHTML + daysHTML;
 
                     // 주소창 업데이트 (페이지 점프 방지하면서 URL만 변경)
-                    window.history.pushState({}, '', `${window.location.pathname}?year=${y}&month=${m}`);
+                    window.history.pushState({}, '', `${window.location.pathname}?year=${currentYear}&month=${currentMonth}`);
                 }
             } catch (e) {
                 console.error('[AJAX] Update Failed:', e);
@@ -623,10 +635,15 @@
                 });
             });
 
-            // 오늘 버튼도 주소 문제 해결
+            // 오늘 버튼도 AJAX로 작동하게 변경 (페이지 점프 방지)
             const todayBtn = document.querySelector('.today-btn');
             if (todayBtn) {
-                todayBtn.setAttribute('onclick', `location.href='${window.location.pathname}'`);
+                todayBtn.removeAttribute('onclick');
+                todayBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    console.log('[Calendar] Moving to Today:', todayYear, todayMonth);
+                    updateCalendar(todayYear, todayMonth);
+                });
             }
         });
 
@@ -656,6 +673,32 @@
                     }
                 } else { contentDiv.innerText = 'Error: ' + json.error; }
             } catch (e) { contentDiv.innerText = '통신 오류'; }
+        }
+
+        async function triggerDeployment() {
+            if (!confirm('현재의 모든 카드와 리소스를 웹 폴더(/var/www/bona)로 즉시 배포하시겠습니까?\n기존 웹 폴더의 내용은 초기화됩니다.')) return;
+
+            const btn = document.querySelector('button[onclick="triggerDeployment()"]');
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.innerHTML = '<div class="icon-box"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="text-box"><h3>배포 중...</h3><p>잠시만 기다려 주세요</p></div>';
+
+            try {
+                const res = await fetch('/studio/api/deploy', { method: 'POST' });
+                const json = await res.json();
+                if (json.success) {
+                    alert('배포가 성공적으로 완료되었습니다.');
+                } else {
+                    alert('배포 도중 오류가 발생했습니다: ' + json.error);
+                }
+            } catch (e) {
+                alert('서버 통신 오류가 발생했습니다.');
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.innerHTML = originalHTML;
+            }
         }
     </script>
 </body>
