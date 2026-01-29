@@ -522,7 +522,7 @@
             calendarSection.style.opacity = '0.5'; // 로딩 표시 대용
 
             try {
-                const res = await fetch(`/studio/?year=${y}&month=${m}&ajax=true`);
+                const res = await fetch(`${window.location.pathname}?year=${y}&month=${m}&ajax=true`);
                 const json = await res.json();
 
                 if (json.success) {
