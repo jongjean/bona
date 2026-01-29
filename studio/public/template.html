@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Good Morning Bona</title>
+
+    <!-- SEO / OG Tags (Injected by Deployer) -->
+    <meta property="og:title" content="{{OG_TITLE}}">
+    <meta property="og:description" content="{{OG_DESCRIPTION}}">
+    <meta property="og:image" content="{{OG_IMAGE}}">
+    <meta property="og:url" content="{{OG_URL}}">
+    <meta property="og:type" content="website">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <!-- Fonts: Standard Selection -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Noto+Serif+KR:wght@400;700&family=Noto+Sans+KR:wght@300;400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* --- Refined Modern Aesthetics (v0.4 Light) --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Noto Serif KR', serif;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: 2rem;
+        }
+
+        .card-container {
+            width: 100%;
+            max-width: 420px;
+            /* Tighter width for focus */
+            background: #000;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .content-wrapper {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .app-title {
+            width: 100%;
+            text-align: center;
+            font-family: 'Dancing Script', cursive;
+            /* Elegant & Light */
+            color: #b8860b;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            margin-top: 0.5rem;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(184, 134, 11, 0.3);
+        }
+
+        .date-display {
+            color: #b8860b;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-weight: 300;
+            text-align: center;
+            width: 100%;
+        }
+
+        .gospel-title {
+            font-family: 'Noto Serif KR', serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            line-height: 1.4;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            word-break: keep-all;
+            color: #fff;
+        }
+
+        .gold-frame-container {
+            margin: 1.5rem 0;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .gold-frame {
+            border: 2px solid #b8860b;
+            /* Light 2px Border */
+            padding: 4px;
+            border-radius: 4px;
+            box-shadow: 0 0 15px rgba(184, 134, 11, 0.2);
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .gold-frame img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 2px;
+            filter: contrast(1.05) brightness(1.05);
+            cursor: pointer;
+        }
+
+        .section-label {
+            width: 100%;
+            text-align: center;
+            color: #b8860b;
+            font-size: 0.82rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            font-family: 'Noto Sans KR', sans-serif;
+            margin-top: 1.5rem;
+        }
+
+        .meditation-body {
+            font-family: 'Noto Serif KR', serif;
+            font-size: 1rem;
+            line-height: 1.9;
+            margin-bottom: 2rem;
+            white-space: pre-wrap;
+            opacity: 0.95;
+            text-align: center;
+            color: #fff;
+            padding: 0 0.5rem;
+            width: 100%;
+        }
+
+        /* --- FIXED PRAYER BOX (No more 'Box Problem') --- */
+        .prayer-text {
+            font-family: 'Noto Serif KR', serif;
+            font-style: italic;
+            color: #cccccc;
+            font-size: 0.95rem;
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+            padding-top: 1.2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            width: 85%;
+            text-align: center;
+            margin-left: auto;
+            margin-right: auto;
+            outline: none;
+            display: block;
+            /* Ensure centering works */
+        }
+
+        /* Footer & Actions */
+        .button-row {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: center;
+            width: 100%;
+            margin-bottom: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .missa-link-btn,
+        .subscribe-btn {
+            flex: 1;
+            max-width: 180px;
+            padding: 0.6rem;
+            border: 1px solid #b8860b;
+            border-radius: 30px;
+            color: #b8860b;
+            text-decoration: none;
+            font-size: 0.8rem;
+            background: none;
+            text-align: center;
+            cursor: pointer;
+            font-family: 'Noto Sans KR', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .footer {
+            width: 100%;
+            text-align: center;
+            font-family: 'Dancing Script', cursive;
+            color: #b8860b;
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+        }
+
+        .share-btn {
+            width: 100%;
+            background: none;
+            border: 1px solid #b8860b;
+            color: #b8860b;
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        /* Modals & Guides */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-card {
+            background: #1a1a1a;
+            border: 1px solid #b8860b;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 320px;
+            padding: 2.2rem 1.5rem;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .image-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+
+        .image-modal img {
+            max-width: 95%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .kakao-guide {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            background: #1a1a1a;
+            border: 1px solid #b8860b;
+            border-radius: 15px;
+            padding: 15px;
+            z-index: 2500;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #ccc;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Modals -->
+    <div id="imageModal" class="image-modal" onclick="this.style.display='none'">
+        <img id="zoomedImage" src="" alt="Zoomed">
+    </div>
+
+    <div id="landingModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔔</div>
+            <h3 style="color: #b8860b; margin-bottom: 0.5rem; font-size: 1.2rem;">매일 아침 묵상시 받기</h3>
+            <p style="margin-bottom: 1.8rem; line-height: 1.6; font-size: 0.9rem; color: #ccc;">
+                정성껏 준비한 매일미사 묵상시와<br>축복의 메시지를 보내드립니다.
+            </p>
+            <button id="mainSubBtn" class="subscribe-btn"
+                style="max-width: 100%; background: #b8860b; color: #fff; font-weight: bold; font-size: 1rem; padding: 0.8rem;">
+                지금 구독 신청하기
+            </button>
+            <button onclick="closeLandingModal()"
+                style="margin-top: 1.2rem; background: none; border: none; color: #666; font-size: 0.85rem; cursor: pointer; text-decoration: underline;">
+                나중에 할게요 (오늘 카드 보기)
+            </button>
+        </div>
+    </div>
+
+    <div id="kakaoGuide" class="kakao-guide">
+        <p><span style="color: #b8860b;">✠</span> 알림 설정을 위해 <strong>[다른 브라우저로 열기]</strong>를 해주세요.</p>
+        <button onclick="this.parentElement.style.display='none'"
+            style="margin-top:10px; background:none; border:1px solid #555; color:#888; padding:5px 12px; border-radius:20px; font-size:0.8rem;">닫기</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="card-container">
+        <div class="content-wrapper">
+            <div class="app-title">Good Morning Bona</div>
+
+            <div id="contentState" style="width: 100%;">
+                <div id="dateDisplay" class="date-display"></div>
+                <div id="gospelTitle" class="gospel-title"></div>
+
+                <div class="gold-frame-container">
+                    <div class="gold-frame">
+                        <img id="meditationImage" src="" alt="Meditation" onclick="openImageModal(this.src)">
+                    </div>
+                </div>
+
+                <div class="section-label">묵상시</div>
+                <div id="meditationBody" class="meditation-body"></div>
+
+                <div class="section-label">
+                    화살기도 <span style="font-size: 0.7rem; color: #888; font-weight: 400; margin-left: 5px;">{나의 기도로 수정 전달
+                        가능}</span>
+                </div>
+                <div id="prayerText" class="prayer-text" contenteditable="true" spellcheck="false" data-original="">
+                </div>
+            </div>
+        </div>
+
+        <div class="button-row">
+            <a href="https://missa.cbck.or.kr/DailyMissa" target="_blank" class="missa-link-btn">매일미사 전문 보기</a>
+            <button id="cardSubBtn" class="subscribe-btn">구독 신청</button>
+        </div>
+
+        <div class="footer">Bona Studio</div>
+        <button id="shareBtn" class="share-btn">전달하기</button>
+    </div>
+
+    <script>
+        // --- BAKE POINT ---
+        const BONA_DATA = {{ BONA_DATA_JSON }};
+
+        // --- RENDER ---
+        function initContent() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const customPrayer = urlParams.get('p') || urlParams.get('prayer');
+            const targetDate = urlParams.get('date');
+
+            if (!BONA_DATA) return;
+
+            // Archive Redirection
+            const isIndex = window.location.pathname.endsWith('index.html') || window.location.pathname.endsWith('/bona/');
+            if (isIndex && targetDate && targetDate !== BONA_DATA.date) {
+                window.location.href = `./${targetDate}.html` + window.location.search;
+                return;
+            }
+
+            if (BONA_DATA.date) {
+                const dateParts = BONA_DATA.date.split('-');
+                document.getElementById('dateDisplay').textContent = `✠ 가톨릭 매일아침 매일미사 복음묵상 ${dateParts[0]}. ${dateParts[1]}. ${dateParts[2]}.`;
+            }
+
+            document.getElementById('gospelTitle').textContent = BONA_DATA.one_line_message || '';
+            document.getElementById('meditationBody').textContent = BONA_DATA.meditation_body || '';
+
+            const prayerEl = document.getElementById('prayerText');
+            if (customPrayer) {
+                prayerEl.textContent = decodeURIComponent(customPrayer).replace(/_/g, ' ');
+                prayerEl.style.color = "#ebd095";
+            } else {
+                prayerEl.textContent = BONA_DATA.prayer_line || '- Bona Studio -';
+            }
+            prayerEl.setAttribute('data-original', BONA_DATA.prayer_line || '');
+
+            if (BONA_DATA.generated_image_url) {
+                let imgUrl = BONA_DATA.generated_image_url;
+                if (imgUrl.includes('/uploads/')) imgUrl = './uploads/' + imgUrl.split('/uploads/')[1];
+                document.getElementById('meditationImage').src = imgUrl;
+            }
+        }
+
+        function openImageModal(src) {
+            document.getElementById('zoomedImage').src = src;
+            document.getElementById('imageModal').style.display = 'flex';
+        }
+
+        function closeLandingModal() {
+            document.getElementById('landingModal').classList.add('hidden');
+            localStorage.setItem('bona_modal_dismissed', new Date().toISOString());
+        }
+
+        async function subscribeUser() {
+            if (!('serviceWorker' in navigator)) return alert('지원하지 않는 브라우저입니다.');
+            try {
+                const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') return alert('알림 권한을 허용해주세요.');
+
+                const keyRes = await fetch('/bona/studio/api/vapid-key');
+                const { publicKey } = await keyRes.json();
+
+                const sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(publicKey)
+                });
+
+                await fetch('/bona/studio/api/subscribe', {
+                    method: 'POST',
+                    body: JSON.stringify(sub),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                localStorage.setItem('bona_subscribed', 'true');
+                alert('✅ 구독 신청이 완료되었습니다!');
+                closeLandingModal();
+                document.getElementById('cardSubBtn').textContent = '구독 완료';
+                document.getElementById('cardSubBtn').disabled = true;
+            } catch (e) {
+                console.error(e);
+                alert('연결이 원활하지 않습니다. 잠시 후 다시 시도해주세요.');
+            }
+        }
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
+            return outputArray;
+        }
+
+        async function share() {
+            const prayerEl = document.getElementById('prayerText');
+            const currentPrayer = prayerEl.textContent.trim();
+            const originalPrayer = (prayerEl.getAttribute('data-original') || '').trim();
+
+            const url = new URL(window.location.href);
+            url.searchParams.delete('p'); url.searchParams.delete('prayer');
+            if (currentPrayer && currentPrayer !== originalPrayer && currentPrayer !== '- Bona Studio -') {
+                url.searchParams.set('p', currentPrayer);
+            }
+
+            const finalUrl = url.toString();
+            try {
+                if (navigator.share) {
+                    await navigator.share({
+                        title: 'Good Morning Bona',
+                        text: `(가톨릭) 매일아침 매일미사 복음묵상\n\n"${currentPrayer}"`,
+                        url: finalUrl
+                    });
+                } else {
+                    await navigator.clipboard.writeText(finalUrl);
+                    alert('복음묵상 링크가 복사되었습니다.');
+                }
+            } catch (e) { }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initContent();
+            const isSubscribed = localStorage.getItem('bona_subscribed') === 'true';
+            if (isSubscribed) {
+                document.getElementById('cardSubBtn').textContent = '구독 완료';
+                document.getElementById('cardSubBtn').disabled = true;
+            } else {
+                const dismissedAt = localStorage.getItem('bona_modal_dismissed');
+                const hoursSinceDismissed = dismissedAt ? (new Date() - new Date(dismissedAt)) / (1000 * 60 * 60) : 999;
+                const urlParams = new URLSearchParams(window.location.search);
+                const isPassiveVisitor = urlParams.has('p') || urlParams.has('prayer') || urlParams.has('date');
+
+                if (hoursSinceDismissed > 24 && !isPassiveVisitor) {
+                    setTimeout(() => {
+                        document.getElementById('landingModal').classList.remove('hidden');
+                    }, 3000);
+                }
+            }
+            if (navigator.userAgent.includes('KAKAOTALK')) {
+                document.getElementById('kakaoGuide').style.display = 'block';
+            }
+            document.getElementById('mainSubBtn').addEventListener('click', subscribeUser);
+            document.getElementById('cardSubBtn').addEventListener('click', subscribeUser);
+            document.getElementById('shareBtn').addEventListener('click', share);
+        });
+    </script>
+</body>
+
+</html>

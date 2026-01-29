@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>묵상 편집기 | Bona Studio</title>
+    <title>묵상시 편집기 | Bona Studio</title>
     <!-- Google Fonts -->
     <link
         href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Dancing+Script:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;700&display=swap"
@@ -361,13 +361,13 @@
                     </div>
 
                     <div class="input-group">
-                        <label>묵상 (Meditation Poem)</label>
+                        <label>묵상시 (Meditation Poem)</label>
                         <textarea class="input-control" name="meditation_body" style="min-height: 240px;"
                             placeholder="AI가 생성한 6줄 내외의 시가 여기에 들어갑니다."><%= data.meditation_body || '' %></textarea>
                     </div>
 
                     <div class="input-group">
-                        <label>오늘의 기도 (Prayer)</label>
+                        <label>화살기도 (Prayer)</label>
                         <input type="text" class="input-control" name="prayer_line" placeholder="예: 주님, 당신의 뜻을 따르게 하소서."
                             value="<%= data.prayer_line || '' %>">
                     </div>
@@ -422,7 +422,7 @@
                             "버튼을 눌러 묵상을 생성해주세요."
                         </div>
 
-                        <!-- 6. 오늘의 기도 -->
+                        <!-- 6. 화살기도 -->
                         <div id="prevPrayer" style="margin-bottom: 1.5rem; border-top: none; padding-top: 0;">
                             - Bona Studio -
                         </div>
@@ -971,7 +971,7 @@
                 <div style="font-size: 2.5rem; color: #6a11cb; margin-bottom: 1rem;">
                     <i class="fa-solid fa-wand-magic-sparkles"></i>
                 </div>
-                <h2 style="color: #6a11cb; margin-bottom: 0.5rem;">AI 묵상 초안 생성</h2>
+                <h2 style="color: #6a11cb; margin-bottom: 0.5rem;">AI 묵상시 초안 생성</h2>
                 <p style="color: #aaa; font-size: 0.9rem; margin-bottom: 2rem; line-height: 1.6;">
                     AI가 오늘의 복음을 바탕으로<br>
                     묵상, 기도, 이미지 프롬프트를 생성합니다.<br>

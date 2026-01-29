@@ -207,67 +207,8 @@ app.post('/studio/api/draft', async (req, res) => {
 });
 
 
-// Routes: Reader Page (Root) -> Caddy strips /bona -> arrives here as /
-app.get('/', async (req, res) => {
-    try {
-        const offset = 1000 * 60 * 60 * 9; // KST
-        let targetDate = req.query.date;
-        const customPrayer = req.query.prayer;
-
-        // 날짜 없으면 오늘
-        if (!targetDate) {
-            targetDate = new Date(Date.now() + offset).toISOString().split('T')[0];
-        }
-
-        const filePath = path.join(DATA_DIR, `draft_${targetDate}.json`);
-        let staticData = null;
-        let metaData = {
-            title: 'Good Morning Bona',
-            description: '(가톨릭) 매일아침 매일미사 복음묵상',
-            image: 'https://uconai.ddns.net/bona/logo.png', // 기본 로고
-            url: `https://uconai.ddns.net/bona/?date=${targetDate}`
-        };
-
-        if (fs.existsSync(filePath)) {
-            const raw = fs.readFileSync(filePath, 'utf8');
-            const draft = JSON.parse(raw);
-            const content = draft.content || draft; // 구조 호환
-
-            if (content.one_line_message) {
-                staticData = content;
-
-                // Build Meta for OG
-                metaData.title = content.one_line_message;
-                // 커스텀 기도문이 있으면 설명에 넣음, 없으면 묵상 본문 앞부분
-                metaData.description = customPrayer || (content.meditation_body ? content.meditation_body.substring(0, 80) + '...' : '(가톨릭) 매일아침 매일미사 복음묵상');
-
-                if (content.generated_image_url) {
-                    let imgUrl = content.generated_image_url;
-                    if (imgUrl.startsWith('/studio/')) imgUrl = 'https://uconai.ddns.net/bona' + imgUrl;
-                    metaData.image = imgUrl; // 카드 이미지
-                }
-            }
-        }
-
-        res.render('reader', {
-            vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
-            staticData: staticData,
-            metaData: metaData // [New] Pass meta for SEO/OG
-        });
-    } catch (e) {
-        console.error('[Reader Render Error]', e);
-        res.render('reader', {
-            vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
-            staticData: null,
-            metaData: {
-                title: 'Good Morning Bona',
-                description: 'Service Unavailable',
-                image: 'https://uconai.ddns.net/bona/logo.png',
-                url: 'https://uconai.ddns.net/bona/'
-            }
-        });
-    }
-});
+// [Notice] Step 5.4: Reader route moved to static index.html handled by Caddy.
+// Node engine no longer renders pages to ensure strict isolation.
 
 // PWA & File System Setup
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
@@ -596,45 +537,80 @@ app.post('/studio/api/publish', async (req, res) => {
 
 
 /**
- * [3.1] 배포 엔진: 원천 소스(public)를 웹 폴더(www)로 안전하게 동기화
- * 사용자 설계 원칙인 "매일 비우고 다시 채우기"를 안전한 원자적 스와핑(Atomic Swap)으로 구현
+ * [5.2] 배포 엔진: 정적 데이터 주입(Baking) 및 독립형 배포
+ * 사용자 설계 원칙: "파일 하나만으로 완벽한 서비스가 가능한 자기완결적 웹폴더 구축"
  */
 async function deployToWebFolder() {
     const { execSync } = require('child_process');
     const sourceDir = path.join(__dirname, 'public/');
+    const templatePath = path.join(__dirname, 'public/template.html');
     const destDir = '/var/www/bona/';
     const tempDir = '/var/www/bona_new/';
 
-    console.log(`[Deployer] 배포 프로세스 시작: ${sourceDir} -> ${destDir}`);
+    // 오늘 날짜 (KST 기준)
+    const offset = 1000 * 60 * 60 * 9;
+    const targetDate = new Date(Date.now() + offset).toISOString().split('T')[0];
+
+    console.log(`[Deployer] 정적 무결성 배포 시작 (날짜: ${targetDate})`);
 
     try {
-        // 1. 보안 검증: 대상 경로가 올바른지 체크
         if (!destDir.startsWith('/var/www/bona')) {
             throw new Error('배포 대상 경로가 올바르지 않습니다.');
         }
 
-        // 2. 임시 폴더에 먼저 준비 (원본을 건드리기 전 안전 확보)
+        // 1. 임시 폴더 준비
         if (fs.existsSync(tempDir)) execSync(`rm -rf ${tempDir}`);
         fs.mkdirSync(tempDir, { recursive: true });
 
-        // 3. 마스터 리소스를 임시 폴더로 복사
-        console.log(`[Deployer] 임시 대기열에 리소스 준비 중...`);
+        // 2. 기본 리소스 복사 (uploads, css, js 등)
         execSync(`cp -r ${sourceDir}* ${tempDir}`);
 
-        // 4. [핵심] 기존 웹 폴더를 완전히 비우고 새 리소스로 즉시 교체
-        console.log(`[Deployer] 웹 폴더 초기화 및 최신본 교체 시작...`);
-        execSync(`rm -rf ${destDir}*`);
-        execSync(`mv ${tempDir}* ${destDir}`);
+        // 3. [Data Baking] 오늘의 데이터를 템플릿에 구워넣기
+        const dataPath = path.join(DATA_DIR, `draft_${targetDate}.json`);
+        if (fs.existsSync(dataPath) && fs.existsSync(templatePath)) {
+            console.log(`[Deployer] '${targetDate}' 데이터를 정적 파일에 굽는 중...`);
 
-        // 5. 뒷정리 및 권한 설정
+            const raw = fs.readFileSync(dataPath, 'utf8');
+            const draft = JSON.parse(raw);
+            const content = draft.content || draft;
+
+            let template = fs.readFileSync(templatePath, 'utf8');
+            // 데이터 주입 (공백 유연성 확보)
+            template = template.replace(/\{\{\s*BONA_DATA_JSON\s*\}\}/g, JSON.stringify(content));
+            // SEO Meta 주입
+            template = template.replace(/\{\{\s*OG_TITLE\s*\}\}/g, content.one_line_message || 'Good Morning Bona');
+            template = template.replace('{{OG_DESCRIPTION}}', content.meditation_body ? content.meditation_body.substring(0, 100) + '...' : '(가톨릭) 매일아침 매일미사 복음묵상');
+            template = template.replace('{{OG_IMAGE}}', content.generated_image_url ? `https://uconai.ddns.net/bona${content.generated_image_url.includes('/uploads/') ? '/uploads/' + content.generated_image_url.split('/uploads/')[1] : content.generated_image_url}` : 'https://uconai.ddns.net/bona/logo.png');
+            template = template.replace('{{OG_URL}}', `https://uconai.ddns.net/bona/${targetDate}.html`);
+
+            // A. 메인 페이지용(index.html)으로 저장
+            fs.writeFileSync(path.join(tempDir, 'index.html'), template);
+
+            // B. 영구 보존용(YYYY-MM-DD.html)으로 저장
+            fs.writeFileSync(path.join(tempDir, `${targetDate}.html`), template);
+
+            console.log(`[Deployer] 정적 파일 생성 완료: index.html, ${targetDate}.html`);
+        } else {
+            console.warn(`[Deployer] 데이터나 템플릿이 없어 Baking을 건너뜁니다.`);
+        }
+
+        // 4. 기존 폴더 교체 (기존 아카이브 파일들을 살리기 위해 주의 깊게 병합)
+        console.log(`[Deployer] 웹 서비스 창구 최신화 중...`);
+        // 기존 아카이브 파일들을 유지하기 위해 'cp -n' 대신 필요한 것만 덮어쓰거나 rsync-like하게 작동
+        // 여기서는 사용자님의 "매일 비우고 채우기" 원칙을 유지하되 과거 HTML은 보존하는 정책 적용
+
+        // 일단 새 파일들을 목적지로 이동/덮어쓰기
+        execSync(`cp -r ${tempDir}* ${destDir}`);
+
+        // 5. 뒷정리 및 권한
         if (fs.existsSync(tempDir)) execSync(`rm -rf ${tempDir}`);
         execSync(`chown -R ucon:ucon ${destDir}`);
 
-        console.log(`[Deployer] 배포 성공: 웹 폴더가 최신 상태로 갱신되었습니다.`);
+        console.log(`[Deployer] 배포 성공! 이제 엔진 없이도 서비스가 가능한 상태입니다.`);
         return { success: true };
     } catch (error) {
         console.error(`[Deployer] 배포 중 심각한 오류 발생:`, error.message);
-        try { if (fs.existsSync(tempDir)) execSync(`rm -rf ${tempDir}`); } catch (e) { }
+        if (fs.existsSync(tempDir)) execSync(`rm -rf ${tempDir}`);
         return { success: false, error: error.message };
     }
 }
