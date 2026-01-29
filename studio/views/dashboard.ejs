@@ -505,25 +505,92 @@
     </style>
 
     <script>
-        const PREV_URL = '/studio/?year=<%= prevYear %>&month=<%= prevMonth %>';
-        const NEXT_URL = '/studio/?year=<%= nextYear %>&month=<%= nextMonth %>';
+        // 초기 데이터 (서버에서 주입)
+        let currentYear = <%= currentYear %>;
+        let currentMonth = <%= currentMonth %>;
+        let prevYear = <%= prevYear %>, prevMonth = <%= prevMonth %>;
+        let nextYear = <%= nextYear %>, nextMonth = <%= nextMonth %>;
+
+        // [AJAX] 달력만 업데이트하는 함수
+        async function updateCalendar(y, m) {
+            const calendarSection = document.querySelector('.calendar-section');
+            calendarSection.style.opacity = '0.5'; // 로딩 표시 대용
+
+            try {
+                const res = await fetch(`/studio/?year=${y}&month=${m}&ajax=true`);
+                const json = await res.json();
+
+                if (json.success) {
+                    const data = json.data;
+
+                    // 1. 전역 변수 업데이트
+                    currentYear = data.currentYear;
+                    currentMonth = data.currentMonth;
+                    prevYear = data.prevYear; prevMonth = data.prevMonth;
+                    nextYear = data.nextYear; nextMonth = data.nextMonth;
+
+                    // 2. 헤더(년/월 표시) 업데이트
+                    document.querySelector('.month-selector').innerText = `${currentYear}년 ${currentMonth}월`;
+
+                    // 3. 네비게이션 버튼 이벤트 업데이트 (필요 시 주소창 pushState도 추가 가능)
+                    // 현재는 단순 버튼 대신 onclick 로직을 함수로 대체하는 것이 좋으나, 
+                    // 가장 확실한 건 calendar-grid 내용물을 새로 그리는 것
+
+                    const grid = document.querySelector('.calendar-grid');
+                    // 헤더(SUN~SAT)는 유지하고 날짜만 다시 그림
+                    const headerHTML = `
+                        <div class="day-name">SUN</div>
+                        <div class="day-name">MON</div>
+                        <div class="day-name">TUE</div>
+                        <div class="day-name">WED</div>
+                        <div class="day-name">THU</div>
+                        <div class="day-name">FRI</div>
+                        <div class="day-name">SAT</div>
+                    `;
+
+                    const daysHTML = data.calendarDays.map(day => {
+                        if (day.isEmpty) return '<div class="calendar-day empty" style="visibility: hidden;"></div>';
+
+                        const isPublished = day.card && day.card.isPublished;
+                        const statusClass = (day.isToday ? 'today' : '') + (isPublished ? ' has-card' : '');
+                        const dayClass = day.isSunday ? 'sunday' : (day.isSaturday ? 'saturday' : '');
+                        const bgStyle = isPublished && day.card.imageUrl ? `background-image: url('${day.card.imageUrl}');` : '';
+
+                        return `
+                            <div class="calendar-day ${statusClass}" style="${bgStyle}" onclick="location.href='/studio/editor/${day.dateStr}'">
+                                <span class="date-num ${dayClass}">${day.day}</span>
+                                ${isPublished ? '<span class="status-dot working" title="작성됨" style="background-color: #00b894;"></span>' :
+                                (day.isToday ? '<span class="status-dot" style="background-color: #ff4757;"></span>' : '')}
+                            </div>
+                        `;
+                    }).join('');
+
+                    grid.innerHTML = headerHTML + daysHTML;
+
+                    // 주소창 업데이트 (페이지 점프 방지하면서 URL만 변경)
+                    window.history.pushState({}, '', `/studio/?year=${y}&month=${m}`);
+                }
+            } catch (e) {
+                console.error('[AJAX] Update Failed:', e);
+            } finally {
+                calendarSection.style.opacity = '1';
+            }
+        }
 
         let touchstartX = 0;
         let touchendX = 0;
 
         function checkDirection() {
             const diffX = touchendX - touchstartX;
-            const threshold = 70; // 충분히 밀었을 때만 작동
+            const threshold = 70;
 
             if (Math.abs(diffX) > threshold) {
                 if (touchendX > touchstartX) {
-                    // 오른쪽으로 스와이프: 이전 달로
                     console.log('[Calendar] Swiped Right -> Prev Month');
-                    location.href = PREV_URL;
+                    updateCalendar(prevYear, prevMonth);
                 } else {
-                    // 왼쪽으로 스와이프: 다음 달로
                     console.log('[Calendar] Swiped Left -> Next Month');
-                    location.href = NEXT_URL;
+                    updateCalendar(nextYear, nextMonth);
                 }
             }
         }
@@ -540,6 +607,16 @@
                     checkDirection();
                 }, { passive: true });
             }
+
+            // 기존 버튼들도 AJAX로 작동하게 변경
+            document.querySelectorAll('.nav-btn').forEach((btn, idx) => {
+                btn.removeAttribute('onclick');
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (idx === 0) updateCalendar(prevYear, prevMonth);
+                    else updateCalendar(nextYear, nextMonth);
+                });
+            });
         });
 
         function openAdminModal() { document.getElementById('adminModal').classList.add('open'); }
@@ -549,19 +626,16 @@
             const listArea = document.getElementById('subListArea');
             const countSpan = document.getElementById('subCount');
             const contentDiv = document.getElementById('subListContent');
-
             listArea.style.display = 'block';
             contentDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 로딩 중...';
 
             try {
                 const res = await fetch('/studio/api/subscribers');
                 const json = await res.json();
-
                 if (json.success) {
                     countSpan.innerText = json.count;
-                    if (json.count === 0) {
-                        contentDiv.innerHTML = '구독자가 없습니다.';
-                    } else {
+                    if (json.count === 0) contentDiv.innerHTML = '구독자가 없습니다.';
+                    else {
                         contentDiv.innerHTML = json.list.map((sub, i) => `
                             <div style="padding: 5px 0; border-bottom: 1px solid #333;">
                                 <span style="color: #b8860b;">#${i + 1}</span> 
@@ -569,12 +643,8 @@
                             </div>
                         `).join('');
                     }
-                } else {
-                    contentDiv.innerText = 'Error: ' + json.error;
-                }
-            } catch (e) {
-                contentDiv.innerText = '통신 오류';
-            }
+                } else { contentDiv.innerText = 'Error: ' + json.error; }
+            } catch (e) { contentDiv.innerText = '통신 오류'; }
         }
     </script>
 </body>

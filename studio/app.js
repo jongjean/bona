@@ -142,7 +142,7 @@ app.get('/studio', (req, res) => {
         });
     }
 
-    res.render('dashboard', {
+    const data = {
         title: 'Bona Studio',
         today: today,
         calendarDays: calendarDays,
@@ -153,7 +153,13 @@ app.get('/studio', (req, res) => {
         nextYear: nextYear,
         nextMonth: nextMonth,
         publishedDates: Object.keys(publishedCards)
-    });
+    };
+
+    if (req.query.ajax === 'true') {
+        return res.json({ success: true, data });
+    }
+
+    res.render('dashboard', data);
 });
 
 // Routes: Editor
