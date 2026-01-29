@@ -615,7 +615,6 @@ setInterval(async () => {
                     const payload = JSON.stringify({
                         title: content.one_line_message || '오늘의 묵상',
                         body: content.meditation_body ? content.meditation_body.substring(0, 30) + '...' : '오늘의 말씀이 도착했습니다.',
-                        icon: '/bona/assets/icon-192.png',
                         url: `/bona/?date=${dateStr}`
                     });
 
