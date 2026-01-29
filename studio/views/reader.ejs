@@ -601,16 +601,16 @@
         }
 
         async function subscribeUser() {
-            const reg = await registerServiceWorker();
-            if (!reg) return alert('서비스 워커 등록 실패');
-
-            // Kakao Check
+            // Kakao Check (Moved up to prevent registration error)
             const ua = navigator.userAgent.toUpperCase();
             if (ua.includes('KAKAOTALK')) {
                 document.getElementById('kakaoGuide').style.display = 'block';
-                // 렌더링 직후 확실하게 이동 (딜레이 + 강제 좌표)
                 setTimeout(() => { window.scrollTo(0, 0); }, 100);
+                return;
             }
+
+            const reg = await registerServiceWorker();
+            if (!reg) return alert('지원하지 않는 브라우저입니다. 크롬/사파리를 권장합니다.');
 
             const permission = await Notification.requestPermission();
             if (permission === 'denied') {
