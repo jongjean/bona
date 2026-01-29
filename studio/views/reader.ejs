@@ -5,6 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bona Studio - 매일아침 복음묵상</title>
+    <!-- KakaoTalk & Social Share Meta Tags (SSR) -->
+    <meta property="og:title" content="<%= metaData ? metaData.title : 'Good Morning Bona' %>">
+    <meta property="og:description" content="<%= metaData ? metaData.description : '(가톨릭) 매일아침 매일미사 복음묵상' %>">
+    <meta property="og:image" content="<%= metaData ? metaData.image : 'https://uconai.ddns.net/bona/logo.png' %>">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="<%= metaData ? metaData.url : 'https://uconai.ddns.net/bona/' %>">
+    <meta property="og:type" content="website">
     <!-- Google Fonts -->
     <link
         href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Dancing+Script:wght@700&family=Noto+Sans+KR:wght@300;400;700&display=swap"
@@ -63,7 +71,6 @@
             font-family: 'Noto Sans KR', sans-serif;
             font-weight: 300;
             text-align: center;
-            /* Center align */
             width: 100%;
         }
 
@@ -103,13 +110,11 @@
             border-radius: 2px;
             filter: contrast(1.05) brightness(1.05);
             cursor: pointer;
-            /* 클릭 가능 표시 */
         }
 
-        /* Section Label */
+        /* Section Labels */
         .section-label {
             width: 100%;
-            /* 라벨은 꽉 차게 */
             text-align: center;
             color: #b8860b;
             font-size: 0.8rem;
@@ -133,6 +138,8 @@
             color: #fff;
             padding: 0 0.5rem;
             width: 100%;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         /* Prayer Text */
@@ -149,7 +156,12 @@
             text-align: center;
             margin-left: auto;
             margin-right: auto;
-            /* 박스 자체 중앙 정렬 */
+            /* Editable Style */
+            outline: none;
+        }
+
+        .prayer-text:focus {
+            border-bottom: 1px dashed rgba(184, 134, 11, 0.5);
         }
 
         /* Content Wrapper */
@@ -357,6 +369,52 @@
         <img id="zoomedImage" src="">
     </div>
 
+    <!-- Custom Share Modal -->
+    <div id="shareModal" class="modal-overlay hidden" onclick="if(event.target === this) closeShareModal()">
+        <div class="modal-card" style="padding: 1.5rem; max-width: 300px;">
+            <h3 style="color: #b8860b; margin-bottom: 1.5rem; font-size: 1.1rem;">어디로 전달할까요?</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <!-- KakaoTalk -->
+                <button onclick="handleShare('kakao')"
+                    style="background:none; border:none; cursor:pointer; color:#fff;">
+                    <div
+                        style="background:#FEE500; width:50px; height:50px; border-radius:50%; margin:auto; display:flex; align-items:center; justify-content:center; color:#000; font-size:1.5rem; margin-bottom:5px;">
+                        <i class="fa-solid fa-comment"></i>
+                    </div>
+                    <span style="font-size:0.8rem;">카카오톡</span>
+                </button>
+                <!-- SMS -->
+                <button onclick="handleShare('sms')" style="background:none; border:none; cursor:pointer; color:#fff;">
+                    <div
+                        style="background:#4cd137; width:50px; height:50px; border-radius:50%; margin:auto; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.5rem; margin-bottom:5px;">
+                        <i class="fa-solid fa-envelope"></i>
+                    </div>
+                    <span style="font-size:0.8rem;">문자메시지</span>
+                </button>
+                <!-- Facebook -->
+                <button onclick="handleShare('facebook')"
+                    style="background:none; border:none; cursor:pointer; color:#fff;">
+                    <div
+                        style="background:#1877F2; width:50px; height:50px; border-radius:50%; margin:auto; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.5rem; margin-bottom:5px;">
+                        <i class="fa-brands fa-facebook-f"></i>
+                    </div>
+                    <span style="font-size:0.8rem;">페이스북</span>
+                </button>
+                <!-- Instagram -->
+                <button onclick="handleShare('instagram')"
+                    style="background:none; border:none; cursor:pointer; color:#fff;">
+                    <div
+                        style="background:linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); width:50px; height:50px; border-radius:50%; margin:auto; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.5rem; margin-bottom:5px;">
+                        <i class="fa-brands fa-instagram"></i>
+                    </div>
+                    <span style="font-size:0.8rem;">인스타그램</span>
+                </button>
+            </div>
+            <button onclick="closeShareModal()"
+                style="margin-top: 1.5rem; background:none; border:1px solid #555; color:#888; padding:5px 15px; border-radius:20px; font-size:0.8rem;">닫기</button>
+        </div>
+    </div>
+
     <!-- Kakao Guide (Floating) -->
     <div id="kakaoGuide" class="kakao-guide">
         <p style="margin-top: 5px;">
@@ -425,8 +483,13 @@
                 <div id="meditationBody" class="meditation-body"></div>
 
                 <!-- Prayer -->
-                <div class="section-label">오늘의 기도</div>
-                <div id="prayerText" class="prayer-text"></div>
+                <div class="section-label">
+                    오늘의 기도 <span style="font-size: 0.7rem; color: #888; font-weight: 400; margin-left: 5px;">{나의 기도로 수정
+                        전달 가능}</span>
+                </div>
+
+                <!-- [Editable Prayer Text] -->
+                <div id="prayerText" class="prayer-text" contenteditable="true" spellcheck="false"></div>
             </div>
         </div>
 
@@ -497,7 +560,22 @@
 
             document.getElementById('gospelTitle').textContent = data.one_line_message || '오늘의 말씀';
             document.getElementById('meditationBody').textContent = data.meditation_body || '';
-            document.getElementById('prayerText').textContent = data.prayer_line || '- Bona Studio -';
+
+            // [Custom Prayer Check]
+            const urlParams = new URLSearchParams(window.location.search);
+            const customPrayer = urlParams.get('prayer');
+            const prayerEl = document.getElementById('prayerText');
+
+            if (customPrayer) {
+                prayerEl.innerText = customPrayer;
+                // 커스텀 기도 표시
+                prayerEl.style.color = "#ebd095";
+            } else {
+                prayerEl.innerText = data.prayer_line || '- Bona Studio -';
+            }
+
+            // 원본 저장 (수정 여부 확인용)
+            prayerEl.setAttribute('data-original', data.prayer_line || '');
 
             if (data.generated_image_url) {
                 let imgUrl = data.generated_image_url;
@@ -505,7 +583,7 @@
 
                 const imgEl = document.getElementById('meditationImage');
                 imgEl.src = imgUrl;
-                imgEl.onclick = function () { openImageModal(this.src); }; // 이미지 확대
+                imgEl.onclick = function () { openImageModal(this.src); };
                 document.querySelector('.gold-frame-container').style.display = 'flex';
             } else {
                 document.querySelector('.gold-frame-container').style.display = 'none';
@@ -524,7 +602,7 @@
             if ('serviceWorker' in navigator) {
                 try {
                     return await navigator.serviceWorker.register('/bona/sw.js', { scope: '/bona/' });
-                } catch (e) { console.error('SW Error:', e); }
+                } catch (e) { }
             }
             return null;
         }
@@ -537,6 +615,8 @@
             const ua = navigator.userAgent.toUpperCase();
             if (ua.includes('KAKAOTALK')) {
                 document.getElementById('kakaoGuide').style.display = 'block';
+                // 렌더링 직후 확실하게 이동 (딜레이 + 강제 좌표)
+                setTimeout(() => { window.scrollTo(0, 0); }, 100);
             }
 
             const permission = await Notification.requestPermission();
@@ -581,28 +661,116 @@
             return outputArray;
         }
 
-        async function shareMeditation() {
+        // [Share Button Click Hook]
+        // [Share Button Click Hook]
+        function shareMeditation() {
+            window.currentShareData = prepareShareData();
+            document.getElementById('shareModal').classList.remove('hidden');
+        }
+
+        function closeShareModal() {
+            document.getElementById('shareModal').classList.add('hidden');
+            checkSubscription();
+        }
+
+        function prepareShareData() {
             const urlParams = new URLSearchParams(window.location.search);
             const targetDate = urlParams.get('date');
-            let currentUrl = window.location.origin + window.location.pathname;
-            if (targetDate) currentUrl += `?date=${targetDate}`;
 
-            const shareData = {
-                title: 'Good Morning Bona',
-                text: '(가톨릭) 매일아침 매일미사 복음묵상',
-                url: currentUrl
-            };
+            const prayerEl = document.getElementById('prayerText');
+            // innerText 안전하게 가져오기
+            const currentPrayer = prayerEl.innerText.replace(/\n\s*\n/g, '\n\n').trim();
+            const originalPrayer = (prayerEl.getAttribute('data-original') || '').trim();
 
-            try {
-                if (navigator.share) await navigator.share(shareData);
-                else {
-                    await navigator.clipboard.writeText(currentUrl);
-                    alert('✅ 링크가 복사되었습니다!');
+            // [Fix] Stateless SSR을 위한 엔드포인트 사용
+            // 이 주소로 가면 Node.js가 즉석에서 OG 태그를 붙여줌
+            let finalUrl = 'https://uconai.ddns.net/bona/studio/share';
+
+            let queryParts = [];
+            if (targetDate) queryParts.push(`date=${targetDate}`);
+
+            // 수정된 기도문이 있으면 쿼리 파라미터에 직접 포함 (긴 주소)
+            if (currentPrayer && currentPrayer !== originalPrayer) {
+                queryParts.push(`prayer=${encodeURIComponent(currentPrayer)}`);
+            }
+
+            if (queryParts.length > 0) finalUrl += '?' + queryParts.join('&');
+            
+            // [Fix] 카카오톡 캐시 방지용 타임스탬프 추가
+            finalUrl += (finalUrl.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+
+            // 3줄 요약 포맷 유지
+            const text = `{가톨릭} 매일아침 매일미사 복음묵상\n오늘의 묵상기도 카드를 확인하세요\n${finalUrl}`;
+
+            return { url: finalUrl, text: text };
+        }
+
+        async function handleShare(type) {
+            const data = window.currentShareData;
+
+            if (type === 'sms') {
+                location.href = `sms:?body=${encodeURIComponent(data.text)}`;
+                setTimeout(closeShareModal, 1000);
+            }
+            else if (type === 'facebook') {
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(data.url)}`, '_blank');
+                setTimeout(closeShareModal, 1000);
+            }
+            else if (type === 'kakao') {
+                try {
+                    await navigator.clipboard.writeText(data.text);
+                    alert('✅ 내용이 복사되었습니다.\n카카오톡 대화창에 [붙여넣기] 하세요.');
+                    setTimeout(() => { location.href = 'kakaotalk://'; }, 100);
+                } catch (err) {
+                    prompt('아래 텍스트를 복사해서 보내세요:', data.text);
                 }
-            } catch (err) {
-                // Ignore abort errors
+                setTimeout(closeShareModal, 500);
+            }
+            else if (type === 'instagram') {
+                try {
+                    await navigator.clipboard.writeText(data.text);
+                    alert('✅ 내용이 복사되었습니다.\n인스타그램을 열어 붙여넣기 하세요.');
+                    setTimeout(() => { location.href = 'instagram://'; }, 100);
+                } catch (err) { }
+                setTimeout(closeShareModal, 500);
             }
         }
+
+        function checkSubscription() {
+            const isSubscribed = localStorage.getItem('bona_subscribed') === 'true';
+            const hasPermission = Notification.permission === 'granted';
+            if (!isSubscribed && !hasPermission) {
+                setTimeout(() => {
+                    if (confirm("매일 아침 묵상 카드를 받아보시겠습니까?")) subscribeUser();
+                }, 500);
+            }
+        }
+
+        // [New] Real-time URL Sync for Data Persistance
+        // 기도문을 수정하면 즉시 주소창(URL)에 반영 -> '다른 브라우저로 열기' 해도 내용 유지됨
+        function updateUrlWithPrayer() {
+            const prayerEl = document.getElementById('prayerText');
+            const currentPrayer = prayerEl.innerText.trim();
+            const originalPrayer = (prayerEl.getAttribute('data-original') || '').trim();
+
+            const url = new URL(window.location);
+
+            if (currentPrayer && currentPrayer !== originalPrayer) {
+                url.searchParams.set('prayer', currentPrayer);
+            } else {
+                url.searchParams.delete('prayer');
+            }
+
+            // 주소창만 조용히 변경 (새로고침 X)
+            window.history.replaceState({}, '', url);
+        }
+
+        // Debounce setup
+        let debounceTimer;
+        document.getElementById('prayerText').addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(updateUrlWithPrayer, 300); // 0.3초 딜레이
+        });
 
         document.getElementById('subscribeBtn').addEventListener('click', subscribeUser);
         document.getElementById('shareBtn').addEventListener('click', shareMeditation);

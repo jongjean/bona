@@ -9,12 +9,17 @@ const webpush = require('web-push');
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3042; // Studio는 3042번 포트 사용
+const PORT = process.env.PORT || 3042;
 
-// View Engine Setup
+// View Engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-// Middleware to serve static files (sw.js, images, etc.) - index.html 자동 서빙 방지
+
+// [Fixed] Image Logic Priority: Serve static files FIRST
+// 정적 파일(/studio)을 가장 먼저 처리해야 외부(카톡)에서 이미지 접근 가능
+app.use('/studio', express.static(path.join(__dirname, 'public'), { index: false }));
+
+// Other Middleware
 app.use(express.static('/var/www/bona', { index: false }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -199,27 +204,61 @@ app.post('/studio/api/draft', async (req, res) => {
 // Routes: Reader Page (Root) -> Caddy strips /bona -> arrives here as /
 app.get('/', async (req, res) => {
     try {
-        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
-        const filePath = path.join(DATA_DIR, `draft_${today}.json`);
+        const offset = 1000 * 60 * 60 * 9; // KST
+        let targetDate = req.query.date;
+        const customPrayer = req.query.prayer;
+
+        // 날짜 없으면 오늘
+        if (!targetDate) {
+            targetDate = new Date(Date.now() + offset).toISOString().split('T')[0];
+        }
+
+        const filePath = path.join(DATA_DIR, `draft_${targetDate}.json`);
         let staticData = null;
+        let metaData = {
+            title: 'Good Morning Bona',
+            description: '(가톨릭) 매일아침 매일미사 복음묵상',
+            image: 'https://uconai.ddns.net/bona/logo.png', // 기본 로고
+            url: `https://uconai.ddns.net/bona/?date=${targetDate}`
+        };
 
         if (fs.existsSync(filePath)) {
             const raw = fs.readFileSync(filePath, 'utf8');
             const draft = JSON.parse(raw);
-            if (draft.one_line_message) {
-                staticData = draft;
+            const content = draft.content || draft; // 구조 호환
+
+            if (content.one_line_message) {
+                staticData = content;
+
+                // Build Meta for OG
+                metaData.title = content.one_line_message;
+                // 커스텀 기도문이 있으면 설명에 넣음, 없으면 묵상 본문 앞부분
+                metaData.description = customPrayer || (content.meditation_body ? content.meditation_body.substring(0, 80) + '...' : '(가톨릭) 매일아침 매일미사 복음묵상');
+
+                if (content.generated_image_url) {
+                    let imgUrl = content.generated_image_url;
+                    if (imgUrl.startsWith('/studio/')) imgUrl = 'https://uconai.ddns.net/bona' + imgUrl;
+                    metaData.image = imgUrl; // 카드 이미지
+                }
             }
         }
 
         res.render('reader', {
             vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
-            staticData: staticData
+            staticData: staticData,
+            metaData: metaData // [New] Pass meta for SEO/OG
         });
     } catch (e) {
         console.error('[Reader Render Error]', e);
         res.render('reader', {
             vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
-            staticData: null
+            staticData: null,
+            metaData: {
+                title: 'Good Morning Bona',
+                description: 'Service Unavailable',
+                image: 'https://uconai.ddns.net/bona/logo.png',
+                url: 'https://uconai.ddns.net/bona/'
+            }
         });
     }
 });
@@ -441,6 +480,11 @@ app.post('/studio/api/subscribe', (req, res) => {
     }
 });
 
+// API: Get VAPID Key (Frontend needs this for subscription)
+app.get('/studio/api/vapid-key', (req, res) => {
+    res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
+});
+
 // API: Get Subscribers (관리자용)
 app.get('/studio/api/subscribers', (req, res) => {
     try {
@@ -548,8 +592,8 @@ setInterval(async () => {
     const minutes = now.getUTCMinutes();
     const dateStr = now.toISOString().split('T')[0];
 
-    // 매일 09시 00분에 실행 (TEST MODE)
-    if (hours === 9 && minutes === 0) {
+    // 매일 06시 00분에 실행
+    if (hours === 6 && minutes === 0) {
         if (lastAutoPublishDate === dateStr) return; // 이미 오늘 보냈으면 패스
 
         console.log(`[Scheduler] Checking for auto-publish: ${dateStr}`);
@@ -604,6 +648,168 @@ setInterval(async () => {
         }
     }
 }, 60000); // 1분마다 체크
+
+// --- URL Shortener Service ---
+const SHORT_LINKS_FILE = path.join(DATA_DIR, 'short_links.json');
+
+// Helper: Generate Random ID (6 chars)
+function generateShortId() {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 6; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
+// API: Create Short Link
+app.post('/studio/api/shorten', (req, res) => {
+    try {
+        const { date, prayer } = req.body;
+        // 기도문이 없으면 굳이 단축 필요 없음 (그냥 기본 URL 줌)
+        if (!prayer) {
+            return res.json({ success: true, shortUrl: `https://uconai.ddns.net/bona/?date=${date}` });
+        }
+
+        let links = {};
+        if (fs.existsSync(SHORT_LINKS_FILE)) {
+            links = JSON.parse(fs.readFileSync(SHORT_LINKS_FILE));
+        }
+
+        // 중복 콘텐츠 체크 (이미 같은 기도문이면 기존 ID 재활용 - 최적화)
+        // (간단하게 구현하기 위해 생략하거나, 매번 생성해도 무방함. 여기선 매번 생성)
+
+        const id = generateShortId();
+        links[id] = { date, prayer, createdAt: new Date().toISOString() };
+
+        fs.writeFileSync(SHORT_LINKS_FILE, JSON.stringify(links, null, 2));
+
+        // 반환 URL (Caddy 설정을 고려하여 /bona/s/ID)
+        res.json({ success: true, shortUrl: `https://uconai.ddns.net/bona/s/${id}` });
+
+    } catch (e) {
+        console.error('[Shortener Error]', e);
+        res.status(500).json({ success: false, error: 'Link generation failed' });
+    }
+});
+
+// Route: Handle Short Link Redirect AND Render (for OG Tags)
+app.get('/s/:id', (req, res) => {
+    const { id } = req.params;
+    try {
+        if (fs.existsSync(SHORT_LINKS_FILE)) {
+            const links = JSON.parse(fs.readFileSync(SHORT_LINKS_FILE));
+            const data = links[id];
+
+            if (data) {
+                // 리다이렉트 대신 직접 렌더링 (OG 이미지 확보를 위해)
+                const targetDate = data.date;
+                const customPrayer = data.prayer;
+
+                const filePath = path.join(DATA_DIR, `draft_${targetDate}.json`);
+                let staticData = null;
+                let metaData = {
+                    title: 'Good Morning Bona',
+                    description: customPrayer || '(가톨릭) 매일아침 매일미사 복음묵상', // 기도문을 설명으로
+                    image: 'https://uconai.ddns.net/bona/logo.png',
+                    url: `https://uconai.ddns.net/bona/s/${id}`
+                };
+
+                if (fs.existsSync(filePath)) {
+                    const raw = fs.readFileSync(filePath, 'utf8');
+                    const draft = JSON.parse(raw);
+                    const content = draft.content || draft;
+
+                    if (content.one_line_message) {
+                        staticData = content;
+                        staticData.prayer_line = customPrayer; // 화면에도 수정된 기도문 표시
+
+                        metaData.title = content.one_line_message;
+                        if (content.generated_image_url) {
+                            let imgUrl = content.generated_image_url;
+                            if (imgUrl.startsWith('/studio/')) imgUrl = 'https://uconai.ddns.net/bona' + imgUrl;
+                            metaData.image = imgUrl;
+                        }
+                    }
+                }
+
+                return res.render('reader', {
+                    vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
+                    staticData: staticData,
+                    metaData: metaData
+                });
+            }
+        }
+        res.redirect('/bona/');
+    } catch (e) {
+        console.error(e);
+        res.redirect('/bona/');
+    }
+});
+
+// [New] Stateless Share Endpoint (No DB, SSR for OG Tags)
+app.get('/studio/share', (req, res) => {
+    try {
+        const { date, prayer } = req.query;
+        const targetDate = date || 'today'; // You might need logic to resolve 'today' server-side if date is missing
+        const customPrayer = prayer;
+
+        // Date resolving logic if 'today' (simplified)
+        // In reality, you might just want to fail gracefully or use current date if needed.
+        // For now, let's assume date is provided or handle file not found.
+
+        const filePath = path.join(DATA_DIR, `draft_${targetDate}.json`);
+
+        let staticData = null;
+        let metaData = {
+            title: 'Good Morning Bona',
+            description: customPrayer || '(가톨릭) 매일아침 매일미사 복음묵상',
+            image: 'https://uconai.ddns.net/bona/logo.png',
+            url: `https://uconai.ddns.net/bona/studio/share?date=${targetDate}`
+        };
+
+        // [Fix] 클릭 시에도 수정된 기도문 유지
+        if (customPrayer) {
+            metaData.url += `&prayer=${encodeURIComponent(customPrayer)}`;
+        }
+
+        if (fs.existsSync(filePath)) {
+            const raw = fs.readFileSync(filePath, 'utf8');
+            const draft = JSON.parse(raw);
+            const content = draft.content || draft;
+
+            if (content.one_line_message) {
+                // IMPORTANT: Copy object to avoid reference issues
+                staticData = { ...content };
+                if (customPrayer) {
+                    staticData.prayer_line = customPrayer;
+                    metaData.description = customPrayer; // Use custom prayer as OG description
+                }
+
+                metaData.title = content.one_line_message;
+                if (content.generated_image_url) {
+                    let imgUrl = content.generated_image_url;
+                    if (imgUrl.startsWith('/studio/')) imgUrl = 'https://uconai.ddns.net/bona' + imgUrl;
+
+                    // [Cache Busting] 이미지 URL에도 타임스탬프 추가
+                    imgUrl += `?t=${new Date().getTime()}`;
+                    metaData.image = imgUrl;
+                }
+            }
+        }
+
+        // Render with SSR data
+        res.render('reader', {
+            vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
+            staticData: staticData,
+            metaData: metaData
+        });
+
+    } catch (e) {
+        console.error('[Share SSR Error]', e);
+        res.redirect('/bona/');
+    }
+});
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`[Bona Studio] Running on http://0.0.0.0:${PORT}/studio`);
