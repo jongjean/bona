@@ -5,15 +5,277 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bona Studio | 묵상 제작소</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;700&display=swap"
         rel="stylesheet">
-    <!-- 스타일시트 경로 명시 -->
-    <link rel="stylesheet" href="/studio/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
+
+    <style>
+        :root {
+            --primary-color: #b8860b;
+            --bg-color: #111;
+            --card-bg: #1a1a1a;
+            --text-color: #eee;
+            --muted-color: #888;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000;
+            color: var(--text-color);
+            font-family: 'Noto Sans KR', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .glass-container {
+            width: 100%;
+            max-width: 1200px;
+            background: rgba(30, 30, 30, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            min-height: 90vh;
+        }
+
+        /* Header */
+        .studio-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            border-bottom: 1px solid rgba(184, 134, 11, 0.3);
+            padding-bottom: 1rem;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--primary-color);
+        }
+
+        .brand h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            letter-spacing: 2px;
+        }
+
+        .brand i {
+            font-size: 1.5rem;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* Welcome Section */
+        .welcome-section {
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+
+        .welcome-section h2 {
+            font-family: 'Cinzel', serif;
+            color: var(--primary-color);
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-section p {
+            color: #aaa;
+            margin-bottom: 2rem;
+        }
+
+        .action-card {
+            background: linear-gradient(135deg, rgba(184, 134, 11, 0.2), rgba(0, 0, 0, 0.4));
+            border: 1px solid var(--primary-color);
+            padding: 1.5rem;
+            border-radius: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 20px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .action-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+        }
+
+        .card-text {
+            text-align: left;
+        }
+
+        .card-text h3 {
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        .card-text span {
+            font-family: 'Cinzel';
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+
+        /* Calendar Section */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .calendar-header h3 {
+            font-family: 'Cinzel';
+            color: #ddd;
+            font-size: 1.5rem;
+        }
+
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px 15px;
+            border-radius: 30px;
+            border: 1px solid #333;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 5px;
+        }
+
+        .nav-btn:hover {
+            color: #fff;
+        }
+
+        .month-selector {
+            font-weight: bold;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .today-btn {
+            background: var(--primary-color);
+            color: #000;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        /* Calendar Grid */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+        }
+
+        .day-name {
+            text-align: center;
+            color: #666;
+            font-size: 0.8rem;
+            padding: 10px;
+            font-weight: bold;
+            font-family: 'Cinzel';
+        }
+
+        .calendar-day {
+            background: #222;
+            border-radius: 12px;
+            min-height: 120px;
+            padding: 10px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #333;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .calendar-day:hover {
+            border-color: #666;
+            transform: scale(1.02);
+            z-index: 10;
+        }
+
+        /* Today Style */
+        .calendar-day.today {
+            border: 2px solid var(--primary-color) !important;
+            box-shadow: 0 0 15px rgba(184, 134, 11, 0.2);
+        }
+
+        /* Published Style */
+        .calendar-day.has-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 11px;
+        }
+
+        .date-num {
+            font-family: 'Cinzel';
+            font-weight: bold;
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 1px 2px #000;
+        }
+
+        .date-num.sunday {
+            color: #ff6b6b;
+        }
+
+        .date-num.saturday {
+            color: #48dbfb;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            z-index: 2;
+        }
+    </style>
 
 <body>
     <!-- Fallback Content (if CSS fails) -->
@@ -28,14 +290,15 @@
                 <h1>Bona Studio</h1>
             </div>
             <nav>
-                <div style="font-size: 0.9rem; margin-right: 1rem; color: #666;">
-                    <%= today %>
+                <div style="font-size: 0.9rem; margin-right: 1rem; color: #666; font-weight: bold;">
+                    강종진 보나벤뚜라
                 </div>
-                <button class="btn-icon"><i class="fa-solid fa-gear"></i></button>
+                <button class="btn-icon" onclick="openAdminModal()"><i class="fa-solid fa-gear"></i></button>
             </nav>
         </header>
 
         <main class="dashboard-main">
+            <!-- (Existing Content) -->
             <section class="welcome-section">
                 <h2>Peace be with you.</h2>
                 <p>오늘도 주님의 말씀을 전할 준비가 되셨나요?</p>
@@ -51,6 +314,7 @@
             </section>
 
             <section class="calendar-section">
+                <!-- (Existing Calendar Header) -->
                 <div class="calendar-header">
                     <h3>Publication Schedule</h3>
                     <div class="calendar-nav">
@@ -70,7 +334,7 @@
                         </button>
                     </div>
                 </div>
-                <!-- Simple Calendar Grid Helper -->
+                <!-- (Existing Calendar Grid) -->
                 <div class="calendar-grid">
                     <div class="day-name">SUN</div>
                     <div class="day-name">MON</div>
@@ -80,13 +344,10 @@
                     <div class="day-name">FRI</div>
                     <div class="day-name">SAT</div>
 
-                    <!-- Grid Logic with Real Data -->
                     <% calendarDays.forEach(day=> { %>
                         <% if (day.isEmpty) { %>
-                            <!-- 빈 칸 -->
                             <div class="calendar-day empty" style="visibility: hidden;"></div>
                             <% } else { %>
-                                <!-- 실제 날짜 -->
                                 <% const isPublished=day.card && day.card.isPublished; const statusClass=(day.isToday
                                     ? 'today' : '' ) + (isPublished ? ' has-card' : '' ); const dayClass=day.isSunday
                                     ? 'sunday' : (day.isSaturday ? 'saturday' : '' ); const bgStyle=isPublished &&
@@ -110,6 +371,175 @@
             </section>
         </main>
     </div>
+
+    <!-- Admin Modal -->
+    <div id="adminModal" class="modal-overlay">
+        <div class="modal-card">
+            <button class="modal-close-btn" onclick="closeAdminModal()">✕</button>
+            <h2 style="color: var(--primary-color); font-family: 'Cinzel'; margin-bottom: 2rem;">Studio Admin</h2>
+
+            <div class="admin-menu">
+                <button class="menu-item" onclick="loadSubscribers()">
+                    <div class="icon-box"><i class="fa-solid fa-users"></i></div>
+                    <div class="text-box">
+                        <h3>구독자 현황</h3>
+                        <p>현재 구독 중인 사용자 목록 확인</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right arrow"></i>
+                </button>
+
+                <!-- 추가 메뉴 확장 가능 -->
+            </div>
+
+            <div id="subListArea" style="display: none; margin-top: 1.5rem; text-align: left;">
+                <h4 style="color: #ddd; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px;">
+                    총 구독자: <span id="subCount" style="color: #00b894; font-size: 1.2rem;">0</span>명
+                </h4>
+                <div id="subListContent"
+                    style="max-height: 200px; overflow-y: auto; background: #111; padding: 10px; border-radius: 8px; font-size: 0.85rem; color: #888; font-family: monospace;">
+                    <!-- List items will go here -->
+                </div>
+                <button onclick="document.getElementById('subListArea').style.display='none'"
+                    style="margin-top: 10px; background: none; border: 1px solid #555; color: #aaa; padding: 5px 10px; border-radius: 5px; cursor: pointer; width: 100%;">
+                    목록 닫기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-card {
+            background: #1e1e1e;
+            width: 90%;
+            max-width: 400px;
+            padding: 2rem;
+            border-radius: 15px;
+            border: 1px solid #333;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .modal-close-btn:hover {
+            color: #fff;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            background: #2a2a2a;
+            border: none;
+            padding: 1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .menu-item:hover {
+            background: #333;
+            transform: translateX(5px);
+        }
+
+        .icon-box {
+            width: 40px;
+            height: 40px;
+            background: rgba(184, 134, 11, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .text-box {
+            flex: 1;
+            text-align: left;
+        }
+
+        .text-box h3 {
+            color: #eee;
+            font-size: 1rem;
+            margin-bottom: 2px;
+        }
+
+        .text-box p {
+            color: #666;
+            font-size: 0.8rem;
+        }
+
+        .arrow {
+            color: #444;
+        }
+    </style>
+
+    <script>
+        function openAdminModal() { document.getElementById('adminModal').classList.add('open'); }
+        function closeAdminModal() { document.getElementById('adminModal').classList.remove('open'); document.getElementById('subListArea').style.display = 'none'; }
+
+        async function loadSubscribers() {
+            const listArea = document.getElementById('subListArea');
+            const countSpan = document.getElementById('subCount');
+            const contentDiv = document.getElementById('subListContent');
+
+            listArea.style.display = 'block';
+            contentDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 로딩 중...';
+
+            try {
+                const res = await fetch('/studio/api/subscribers');
+                const json = await res.json();
+
+                if (json.success) {
+                    countSpan.innerText = json.count;
+                    if (json.count === 0) {
+                        contentDiv.innerHTML = '구독자가 없습니다.';
+                    } else {
+                        contentDiv.innerHTML = json.list.map((sub, i) => `
+                            <div style="padding: 5px 0; border-bottom: 1px solid #333;">
+                                <span style="color: #b8860b;">#${i + 1}</span> 
+                                <span title="${sub.endpoint}">${sub.endpoint.substring(0, 30)}...</span>
+                            </div>
+                        `).join('');
+                    }
+                } else {
+                    contentDiv.innerText = 'Error: ' + json.error;
+                }
+            } catch (e) {
+                contentDiv.innerText = '통신 오류';
+            }
+        }
+    </script>
 </body>
 
 </html>

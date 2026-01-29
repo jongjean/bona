@@ -339,10 +339,11 @@
                     <!-- Action Buttons -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 2rem;">
                         <button type="button" onclick="generateDraft()" class="btn-primary"
-                            style="background: #eebb11; color: #000; font-weight: 800;">
+                            style="background: #eebb11; color: #000; font-weight: 800; border: none;">
                             ✨ 묵상초안 생성하기 (AI)
                         </button>
-                        <button type="button" onclick="saveDraft()" class="btn-secondary">
+                        <button type="button" onclick="saveDraft()" class="btn-primary"
+                            style="background: #444; color: #fff; font-weight: 800; border: none;">
                             💾 저장하기 (Save)
                         </button>
                     </div>
@@ -608,6 +609,53 @@
 
         <!-- MAIN SCRIPT BLOCK -->
         <script>
+            // --- 0. Date Navigation Logic ---
+            const currentDateStr = '<%= date %>'; // Server-side rendered date
+
+            function moveDate(days) {
+                const current = new Date(currentDateStr);
+                current.setDate(current.getDate() + days);
+                const nextDate = current.toISOString().split('T')[0];
+                window.location.href = `/studio/editor/${nextDate}`;
+            }
+
+            function goToDate(target) {
+                if (target === 'today') {
+                    // Asia/Seoul Timezone logic (Simplified & Accurate)
+                    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
+                    window.location.href = `/studio/editor/${today}`;
+                }
+            }
+
+            // --- 0.5 Save Draft Logic ---
+            async function saveDraft() {
+                const btn = document.querySelector('button[onclick="saveDraft()"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 저장 중...';
+                btn.disabled = true;
+
+                try {
+                    const data = await getFormData();
+                    // Use publish endpoint with saveOnly=true
+                    const res = await fetch('/studio/api/publish?saveOnly=true', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const json = await res.json();
+                    if (json.success) {
+                        alert('✅ 안전하게 저장되었습니다.');
+                    } else {
+                        alert('저장 실패: ' + json.error);
+                    }
+                } catch (e) {
+                    alert('통신 오류: ' + e.message);
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            }
+
             // --- 1. UI Interaction Logic ---
             const toggleBtn = document.getElementById('toggleMissa');
             const closeBtn = document.getElementById('closeMissa');
@@ -626,7 +674,7 @@
             if (closeBtn) closeBtn.addEventListener('click', () => drawer.classList.remove('open'));
 
             // --- 2. Live Preview Logic ---
-            const form = document.getElementById('bonaForm');
+            const form = document.getElementById('editorForm');
             const prevRef = document.getElementById('prevRef');
             const prevTitle = document.getElementById('prevTitle');
             const prevBody = document.getElementById('prevBody');
@@ -777,7 +825,13 @@
             }
 
             // --- 5. AI Generation ---
-            const aiBtn = document.getElementById('aiGenBtn');
+            // 'generateDraft' 함수가 없어서 버튼이 동작하지 않았음. 복구.
+            function generateDraft() {
+                openAiConfirmModal();
+            }
+
+            // AI 버튼(스피너 표시용) 전역 변수로 찾기
+            const aiBtn = document.querySelector('button[onclick="generateDraft()"]');
 
             // 모달 열기/닫기 함수
             function openAiConfirmModal() {

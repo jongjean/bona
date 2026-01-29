@@ -1,1 +1,4 @@
 [Bona Studio] Running on http://0.0.0.0:3042/studio
+[Scheduler] Checking for auto-publish: 2026-01-29
+[Scheduler] Auto-publishing to 3 subscribers...
+[Scheduler] Auto-publish complete. Success: 3/3

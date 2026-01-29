@@ -23,11 +23,9 @@ const downloadImage = async (url, date) => {
     console.log(`[Image] Downloading: ${url}`);
 
     try {
-        const response = await axios({
-            url: url,
-            method: 'GET',
-            responseType: 'stream',
-            timeout: 15000 // 15초 타임아웃
+        const response = await axios.get(url, {
+            responseType: 'arraybuffer',
+            timeout: 20000 // 20초 타임아웃
         });
 
         const filename = `card_${date}.jpg`;
@@ -35,51 +33,16 @@ const downloadImage = async (url, date) => {
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
         const localPath = path.join(dir, filename);
-        const writer = fs.createWriteStream(localPath);
 
-        return new Promise((resolve) => {
-            response.data.pipe(writer);
+        // 버퍼를 파일로 한 번에 쓰기 (Reliable)
+        fs.writeFileSync(localPath, response.data);
+        console.log(`[Image] Saved successfully: ${filename}`);
 
-            let finished = false;
+        return `/studio/uploads/cards/${filename}`;
 
-            writer.on('finish', () => {
-                if (!finished) {
-                    finished = true;
-                    console.log(`[Image] Saved: ${filename}`);
-                    resolve(`/studio/uploads/cards/${filename}`);
-                }
-            });
-
-            writer.on('error', (err) => {
-                if (!finished) {
-                    finished = true;
-                    console.error('[Image Writer Error]', err.message);
-                    writer.close();
-                    resolve(url);
-                }
-            });
-
-            response.data.on('error', (err) => {
-                if (!finished) {
-                    finished = true;
-                    console.error('[Image Response Error]', err.message);
-                    writer.close();
-                    resolve(url);
-                }
-            });
-
-            // 안전장치: 20초 후 강제 종료
-            setTimeout(() => {
-                if (!finished) {
-                    finished = true;
-                    console.warn('[Image] Download timeout, using original URL');
-                    writer.close();
-                    resolve(url);
-                }
-            }, 20000);
-        });
     } catch (e) {
-        console.error('[Image Download Catch Error]', e.message);
+        console.error('[Image Download Error]', e.message);
+        // 실패 시 원본 URL 반환 (깨진 파일 생성 방지)
         return url;
     }
 };
@@ -90,7 +53,7 @@ app.use((req, res, next) => {
 });
 
 // 정적 파일: Legacy Studio Access를 위해 복구
-app.use('/studio', express.static(path.join(__dirname, 'public')));
+app.use('/studio', express.static(path.join(__dirname, 'public'), { index: false }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -108,10 +71,19 @@ app.get('/studio', (req, res) => {
                 const dateStr = f.replace('draft_', '').replace('.json', '');
                 try {
                     const content = JSON.parse(fs.readFileSync(path.join(DATA_DIR, f)));
-                    // Support both nested content structure and flat structure
-                    const imageUrl = (content.content && content.content.generated_image_url)
-                        || content.generated_image_url
-                        || '';
+
+                    // Check for local image first
+                    const localImgName = `card_${dateStr}.jpg`;
+                    const localImgPath = path.join(__dirname, 'public/uploads/cards', localImgName);
+
+                    let imageUrl = '';
+                    if (fs.existsSync(localImgPath)) {
+                        imageUrl = `/studio/uploads/cards/${localImgName}`;
+                    } else {
+                        imageUrl = (content.content && content.content.generated_image_url)
+                            || content.generated_image_url
+                            || '';
+                    }
                     publishedCards[dateStr] = {
                         isPublished: true,
                         imageUrl: imageUrl
@@ -190,6 +162,14 @@ app.get('/studio/editor/:date', (req, res) => {
         try {
             savedData = JSON.parse(fs.readFileSync(filePath));
         } catch (e) { console.error('Load Error:', e); }
+    }
+
+    // [New] Check for Local Image Priority
+    const localImgName = `card_${date}.jpg`;
+    const localImgPath = path.join(__dirname, 'public/uploads/cards', localImgName);
+    if (fs.existsSync(localImgPath)) {
+        if (savedData.content) savedData.content.generated_image_url = `/studio/uploads/cards/${localImgName}`;
+        else savedData.generated_image_url = `/studio/uploads/cards/${localImgName}`;
     }
 
     res.render('editor', {
@@ -461,6 +441,19 @@ app.post('/studio/api/subscribe', (req, res) => {
     }
 });
 
+// API: Get Subscribers (관리자용)
+app.get('/studio/api/subscribers', (req, res) => {
+    try {
+        let subs = [];
+        if (fs.existsSync(SUBS_FILE)) {
+            subs = JSON.parse(fs.readFileSync(SUBS_FILE));
+        }
+        res.json({ success: true, count: subs.length, list: subs });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
 const ADMIN_SUB_FILE = path.join(DATA_DIR, 'admin_sub.json');
 
 // API: Register Admin Device (관리자 테스트 기기 등록)
@@ -481,10 +474,11 @@ app.post('/studio/api/register-admin', (req, res) => {
 app.post('/studio/api/publish', async (req, res) => {
     const data = req.body;
     const isTest = req.query.test === 'true';
+    const isSaveOnly = req.query.saveOnly === 'true'; // [New] 저장 전용 모드
     const date = data.date;
     const filePath = path.join(DATA_DIR, `draft_${date}.json`);
 
-    console.log(`[Publish] Processing (Test=${isTest}) for ${date}...`);
+    console.log(`[Publish] Processing (Test=${isTest}, SaveOnly=${isSaveOnly}) for ${date}...`);
 
     try {
         // 1. 이미지 로컬 저장 (영구 저장)
@@ -496,6 +490,12 @@ app.post('/studio/api/publish', async (req, res) => {
 
         // 2. 파일 저장
         fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+
+        // [New] 저장 전용이면 여기서 종료
+        if (isSaveOnly) {
+            console.log(`[Publish] Saved draft only. No notifications sent.`);
+            return res.json({ success: true, message: 'Draft saved successfully.' });
+        }
 
         let subs = [];
         let targetName = 'All Subscribers';
@@ -537,6 +537,73 @@ app.post('/studio/api/publish', async (req, res) => {
     }
 });
 
+
+// --- Scheduler: Daily 6:00 AM Auto-Publish ---
+let lastAutoPublishDate = ''; // 중복 발송 방지용
+
+setInterval(async () => {
+    // 한국 시간(KST) 기준 계산: UTC + 9
+    const now = new Date(Date.now() + (9 * 60 * 60 * 1000));
+    const hours = now.getUTCHours();
+    const minutes = now.getUTCMinutes();
+    const dateStr = now.toISOString().split('T')[0];
+
+    // 매일 09시 00분에 실행 (TEST MODE)
+    if (hours === 9 && minutes === 0) {
+        if (lastAutoPublishDate === dateStr) return; // 이미 오늘 보냈으면 패스
+
+        console.log(`[Scheduler] Checking for auto-publish: ${dateStr}`);
+
+        try {
+            const draftFile = path.join(DATA_DIR, `draft_${dateStr}.json`);
+            if (fs.existsSync(draftFile)) {
+                // 초안이 존재하면 발송 시도
+                const draft = JSON.parse(fs.readFileSync(draftFile));
+                const content = draft.content || draft; // 구조 호환성
+
+                // 구독자 로드
+                let subs = [];
+                if (fs.existsSync(SUBS_FILE)) {
+                    subs = JSON.parse(fs.readFileSync(SUBS_FILE));
+                }
+
+                if (subs.length > 0) {
+                    const payload = JSON.stringify({
+                        title: content.one_line_message || '오늘의 묵상',
+                        body: content.meditation_body ? content.meditation_body.substring(0, 30) + '...' : '오늘의 말씀이 도착했습니다.',
+                        icon: '/bona/assets/icon-192.png',
+                        url: `/bona/?date=${dateStr}`
+                    });
+
+                    console.log(`[Scheduler] Auto-publishing to ${subs.length} subscribers...`);
+
+                    let successCount = 0;
+                    const promises = subs.map(sub =>
+                        webpush.sendNotification(sub, payload)
+                            .then(() => successCount++)
+                            .catch(err => {
+                                // 만료된 구독자는 무시 (로그만)
+                                console.error('[AutoPublish] Failed to send:', err.statusCode);
+                            })
+                    );
+
+                    await Promise.all(promises);
+                    console.log(`[Scheduler] Auto-publish complete. Success: ${successCount}/${subs.length}`);
+                } else {
+                    console.log('[Scheduler] No subscribers to send to.');
+                }
+
+                // 발송 완료 마킹
+                lastAutoPublishDate = dateStr;
+            } else {
+                console.log(`[Scheduler] No draft found for ${dateStr}. Skipping.`);
+                lastAutoPublishDate = dateStr; // 파일 없어도 재시도 멈춤 (내일 다시)
+            }
+        } catch (e) {
+            console.error('[Scheduler Error]', e);
+        }
+    }
+}, 60000); // 1분마다 체크
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`[Bona Studio] Running on http://0.0.0.0:${PORT}/studio`);

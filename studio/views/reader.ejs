@@ -4,116 +4,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Good Morning Bona</title>
+    <title>Bona Studio - 매일아침 복음묵상</title>
+    <!-- Google Fonts -->
     <link
-        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Dancing+Script:wght@400;700&family=Noto+Serif+KR:wght@400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Dancing+Script:wght@700&family=Noto+Sans+KR:wght@300;400;700&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <!-- KakaoTalk & Social Share Meta Tags -->
-    <meta property="og:title" content="Good Morning Bona">
-    <meta property="og:description" content="(가톨릭) 매일아침 매일미사 복음묵상">
-    <meta property="og:image"
-        content="<%= (staticData && staticData.generated_image_url) ? (staticData.generated_image_url.startsWith('http') ? staticData.generated_image_url : 'https://uconai.ddns.net/bona' + staticData.generated_image_url) : 'https://uconai.ddns.net/bona/logo.png' %>">
-    <meta property="og:url" content="https://uconai.ddns.net/bona/">
-    <meta property="og:type" content="website">
     <style>
+        /* Base Reset */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            background: #000;
+            background-color: #000;
             color: #fff;
-            font-family: 'Noto Serif KR', serif;
-            min-height: 100vh;
+            font-family: 'Noto Sans KR', sans-serif;
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
             overflow-x: hidden;
+            padding-bottom: 2rem;
         }
 
+        /* Container */
         .card-container {
             width: 100%;
-            max-width: 480px;
-            padding: 1.5rem 1rem;
+            max-width: 420px;
+            background: #000;
+            padding: 1.5rem;
             display: flex;
             flex-direction: column;
             align-items: center;
-            text-align: center;
-            min-height: auto;
-            /* 화면 꽉 채우기 해제 */
+            min-height: 100vh;
             position: relative;
         }
 
-        /* Gold Text Utility */
-        .text-gold {
-            color: #b8860b;
-            text-shadow: 0 0 8px rgba(184, 134, 11, 0.3);
-        }
-
-        /* App Header */
+        /* Header */
         .app-title {
-            font-family: 'Cinzel', serif;
-            font-size: 1.4rem;
+            font-family: 'Dancing Script', cursive;
             color: #b8860b;
-            font-weight: 700;
-            margin-top: 1rem;
-            margin-bottom: 0.5rem;
-            letter-spacing: 1px;
-            text-shadow: 0 0 10px rgba(184, 134, 11, 0.4);
-        }
-
-        .date-display {
-            font-family: 'Cinzel', serif;
-            color: #b8860b;
-            font-size: 0.85rem;
+            font-size: 1.8rem;
             margin-bottom: 1.5rem;
-            font-weight: 400;
-            text-shadow: 0 0 8px rgba(184, 134, 11, 0.3);
+            margin-top: 0.5rem;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(184, 134, 11, 0.3);
         }
 
+        /* Date */
+        .date-display {
+            color: #b8860b;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-weight: 300;
+            text-align: center;
+            /* Center align */
+            width: 100%;
+        }
+
+        /* Gospel Message (Title) */
         .gospel-title {
             font-family: 'Noto Serif KR', serif;
-            font-size: 1.35rem;
+            font-size: 1.3rem;
             font-weight: 700;
-            margin-bottom: 1.5rem;
             line-height: 1.4;
-            color: #fff;
+            margin-bottom: 1.5rem;
+            text-align: center;
             word-break: keep-all;
-            padding: 0 0.5rem;
+            color: #fff;
         }
 
-        /* Gold Frame (Landscape) */
+        /* Image Frame */
         .gold-frame-container {
-            margin: 0.5rem 0 1.5rem 0;
-            width: 100%;
+            margin: 1.5rem 0;
             display: flex;
             justify-content: center;
+            width: 100%;
         }
 
         .gold-frame {
-            border: 4px solid #b8860b;
-            border-radius: 4px;
+            border: 2px solid #b8860b;
             padding: 4px;
-            background: #fff;
-            box-shadow: 0 0 15px rgba(184, 134, 11, 0.4);
-            display: inline-block;
-            line-height: 0;
+            border-radius: 4px;
+            box-shadow: 0 0 15px rgba(184, 134, 11, 0.2);
             width: 100%;
-            max-width: 90%;
+            max-width: 100%;
         }
 
         .gold-frame img {
             width: 100%;
             height: auto;
-            aspect-ratio: 16 / 9;
-            object-fit: cover;
             display: block;
+            border-radius: 2px;
+            filter: contrast(1.05) brightness(1.05);
+            cursor: pointer;
+            /* 클릭 가능 표시 */
         }
 
+        /* Section Label */
+        .section-label {
+            width: 100%;
+            /* 라벨은 꽉 차게 */
+            text-align: center;
+            color: #b8860b;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            font-family: 'Noto Sans KR', sans-serif;
+            margin-top: 1.5rem;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Body Text */
         .meditation-body {
             font-family: 'Noto Serif KR', serif;
             font-size: 1rem;
@@ -124,21 +132,44 @@
             text-align: center;
             color: #fff;
             padding: 0 0.5rem;
+            width: 100%;
         }
 
+        /* Prayer Text */
         .prayer-text {
             font-family: 'Noto Serif KR', serif;
             font-style: italic;
             color: #cccccc;
             font-size: 0.9rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
             line-height: 1.5;
             padding-top: 1rem;
             border-top: 1px solid rgba(255, 255, 255, 0.2);
             width: 80%;
+            text-align: center;
+            margin-left: auto;
+            margin-right: auto;
+            /* 박스 자체 중앙 정렬 */
         }
 
-        /* Button Row */
+        /* Content Wrapper */
+        .content-wrapper {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .fixed-footer-wrapper {
+            width: 100%;
+            margin-top: 2rem;
+            padding-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Buttons */
         .button-row {
             display: flex;
             gap: 0.8rem;
@@ -151,57 +182,61 @@
         .subscribe-btn {
             flex: 1;
             max-width: 180px;
-            padding: 0.35rem 0.5rem;
+            padding: 0.5rem;
             border: 1px solid #b8860b;
             border-radius: 30px;
             color: #b8860b;
             text-decoration: none;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             background: none;
             text-align: center;
             cursor: pointer;
             font-family: 'Noto Sans KR', sans-serif;
+            transition: all 0.2s;
         }
 
-        /* Footer */
+        .subscribe-btn:active,
+        .missa-link-btn:active {
+            background: rgba(184, 134, 11, 0.2);
+        }
+
+        /* Footer Text */
         .footer {
             font-family: 'Dancing Script', cursive;
             color: #b8860b;
             font-size: 1.4rem;
-            margin-top: auto;
             margin-bottom: 1rem;
-            text-transform: none;
-            letter-spacing: 0;
         }
 
         /* Share Button */
         .share-btn {
             width: 100%;
-            max-width: 100%;
             background: none;
             border: 1px solid #b8860b;
             color: #b8860b;
-            padding: 0.35rem 1rem;
-            font-size: 0.75rem;
+            padding: 0.4rem 1rem;
+            font-size: 0.8rem;
             border-radius: 30px;
             cursor: pointer;
-            margin-top: 1rem;
+            margin-top: 0.5rem;
             font-family: 'Noto Sans KR', sans-serif;
         }
 
+        /* Utility */
         .loading {
             color: #888;
-            font-size: 1rem;
             margin: auto;
             display: flex;
             flex-direction: column;
             gap: 1rem;
+            text-align: center;
         }
 
         .error {
             color: #ff6b6b;
             font-size: 0.9rem;
             margin: auto;
+            text-align: center;
         }
 
         .hidden {
@@ -247,52 +282,111 @@
             }
         }
 
-        .content-wrapper {
+        /* Image Zoom Modal */
+        .image-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            /* flex: 1; 제거 -> 내용만큼만 공간 차지 */
-            display: flex;
-            flex-direction: column;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            display: none;
+            justify-content: center;
             align-items: center;
+            backdrop-filter: blur(5px);
         }
 
-        .fixed-footer-wrapper {
-            width: 100%;
-            margin-top: 2rem;
-            padding-bottom: 1rem;
+        .image-modal img {
+            max-width: 95%;
+            max-height: 95%;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            border: 2px solid #b8860b;
+        }
+
+        /* Kakao/Notif Floating Guide */
+        .kakao-guide {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            background: rgba(20, 20, 20, 0.95);
+            border: 2px solid #b8860b;
+            border-radius: 15px;
+            padding: 1.2rem;
+            z-index: 9999;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            animation: slideUp 0.5s ease-out;
+            display: none;
+        }
+
+        .kakao-guide p {
+            color: #ccc;
+            font-size: 0.9rem;
+            margin-bottom: 0;
+            line-height: 1.5;
+        }
+
+        .kakao-guide h3 {
+            color: #b8860b;
+            font-size: 1rem;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translate(-50%, 20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
         }
     </style>
 </head>
 
 <body>
-    <!-- Notification Help Modal -->
-    <div id="notifHelpModal" class="modal-overlay" style="display: none;">
-        <div class="modal-card">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">🔔</div>
-            <h3 style="color: #b8860b; margin-bottom: 0.5rem; font-size: 1.2rem;">알림을 켜주세요!</h3>
-            <p style="margin-bottom: 1.5rem; line-height: 1.6; font-size: 0.9rem; color: #ccc;">
-                지금 알림이 꺼져 있어요.<br>
-                매일 아침 묵상을 보내드리려면<br>
-                <strong>알림 허용</strong>이 꼭 필요해요!
-            </p>
-
-            <div
-                style="background: rgba(255,255,255,0.08); padding: 1rem; border-radius: 16px; text-align: left; margin-bottom: 1rem; border: 1px solid rgba(184, 134, 11, 0.3);">
-                <div style="font-size: 0.9rem; line-height: 1.5; display: flex; align-items: flex-start; gap: 10px;">
-                    <span
-                        style="background: #b8860b; color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: bold; flex-shrink: 0; margin-top: 2px;">1</span>
-                    <span>주소창 옆 <strong>🔒자물쇠</strong>를 누르고<br><strong>'알림'</strong>을 <strong>허용</strong>으로 켭니다.</span>
-                </div>
-            </div>
-
-            <button onclick="closeNotifModal()"
-                style="width: 100%; padding: 0.9rem; background: #b8860b; color: #fff; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 15px rgba(184, 134, 11, 0.3);">
-                확인했습니다
-            </button>
-        </div>
+    <!-- Image Zoom Modal -->
+    <div id="imageModal" class="image-modal" onclick="this.style.display='none'">
+        <img id="zoomedImage" src="">
     </div>
 
+    <!-- Kakao Guide (Floating) -->
+    <div id="kakaoGuide" class="kakao-guide">
+        <p style="margin-top: 5px;">
+            <span style="font-size: 1.2rem; color: #b8860b; margin-right: 5px;">✠</span>
+            매일아침 묵상시 알림을 받으시려면<br>
+            <strong>우측 하단 세로 점 3개(⋮)</strong>를 누르고<br>
+            <span style="color: #fff; text-decoration: underline;">[다른 브라우저로 열기]</span>를 해주세요.
+        </p>
+        <button onclick="document.getElementById('kakaoGuide').style.display='none'"
+            style="margin-top: 10px; background: none; border: 1px solid #555; color: #888; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem;">
+            닫기
+        </button>
+    </div>
+
+    <!-- Permission Guide (General) -->
+    <div id="notifGuide" class="kakao-guide" style="border-color: #ff4757;">
+        <h3><span style="font-size: 1.2rem;">✠</span> 알림 설정 안내</h3>
+        <p id="notifGuideText">
+            매일아침 매일미사 묵상시를 받으시려면<br>
+            알림 설정을 해주세요.
+        </p>
+        <button onclick="document.getElementById('notifGuide').style.display='none'"
+            style="margin-top: 10px; background: none; border: 1px solid #555; color: #ccc; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem;">
+            확인
+        </button>
+    </div>
+
+    <!-- Main Container -->
     <div class="card-container">
-        <!-- 상단 콘텐츠 영역 -->
+        <!-- Content Wrapper -->
         <div class="content-wrapper">
             <!-- App Header -->
             <div class="app-title">Good Morning Bona</div>
@@ -327,16 +421,17 @@
                 </div>
 
                 <!-- Meditation Body -->
+                <div class="section-label">묵상시</div>
                 <div id="meditationBody" class="meditation-body"></div>
 
                 <!-- Prayer -->
+                <div class="section-label">오늘의 기도</div>
                 <div id="prayerText" class="prayer-text"></div>
             </div>
         </div>
 
-        <!-- 하단 고정 영역 (버튼 + 푸터) -->
+        <!-- Footer Wrapper -->
         <div class="fixed-footer-wrapper">
-            <!-- Button Row -->
             <div class="button-row">
                 <a href="https://missa.cbck.or.kr/DailyMissa" target="_blank" class="missa-link-btn">
                     매일미사 전문 보기
@@ -346,28 +441,25 @@
                 </button>
             </div>
 
-            <!-- Footer -->
             <div class="footer">Bona Studio</div>
 
-            <!-- Share Button -->
             <button id="shareBtn" class="share-btn">
                 전달하기
             </button>
         </div>
     </div>
 
-    <!-- Server Data Injection (Safe Method) -->
+    <!-- Server Data Injection -->
     <div id="server-data" style="display:none;" data-json="<%= JSON.stringify(staticData || null) %>"></div>
 
     <script>
         const VAPID_PUBLIC_KEY = '<%= vapidPublicKey %>';
 
-        // 데이터 안전하게 로드
+        // 데이터 로드
         try {
             const rawData = document.getElementById('server-data').getAttribute('data-json');
             window.__STATIC_DATA__ = rawData ? JSON.parse(rawData) : null;
         } catch (e) {
-            console.error('Data Parse Error:', e);
             window.__STATIC_DATA__ = null;
         }
 
@@ -376,17 +468,13 @@
                 let data = null;
                 if (window.__STATIC_DATA__) {
                     data = window.__STATIC_DATA__;
-                    console.log('[Reader] Using static data');
                 } else {
                     const urlParams = new URLSearchParams(window.location.search);
                     const targetDate = urlParams.get('date') || 'today';
                     const response = await fetch(`/bona/studio/api/post/${targetDate}`);
                     const result = await response.json();
-                    if (result.success && result.data) {
-                        data = result.data;
-                    } else {
-                        throw new Error('No data available');
-                    }
+                    if (result.success && result.data) data = result.data;
+                    else throw new Error('No data');
                 }
 
                 if (data) {
@@ -394,14 +482,13 @@
                     renderData(finalData);
                 }
             } catch (error) {
-                console.error('Failed to load meditation:', error);
                 document.getElementById('loadingState').classList.add('hidden');
                 document.getElementById('errorState').classList.remove('hidden');
             }
         }
 
         function renderData(data) {
-            // Format date: "✠ 가톨릭 매일아침 매일미사 복음묵상 YYYY. MM. DD."
+            // Format date
             if (data.date) {
                 const dateParts = data.date.split('-');
                 const formattedDate = `✠ 가톨릭 매일아침 매일미사 복음묵상 ${dateParts[0]}. ${dateParts[1]}. ${dateParts[2]}.`;
@@ -414,10 +501,11 @@
 
             if (data.generated_image_url) {
                 let imgUrl = data.generated_image_url;
-                if (imgUrl.startsWith('/studio/')) {
-                    imgUrl = '/bona' + imgUrl;
-                }
-                document.getElementById('meditationImage').src = imgUrl;
+                if (imgUrl.startsWith('/studio/')) imgUrl = '/bona' + imgUrl;
+
+                const imgEl = document.getElementById('meditationImage');
+                imgEl.src = imgUrl;
+                imgEl.onclick = function () { openImageModal(this.src); }; // 이미지 확대
                 document.querySelector('.gold-frame-container').style.display = 'flex';
             } else {
                 document.querySelector('.gold-frame-container').style.display = 'none';
@@ -427,14 +515,16 @@
             document.getElementById('contentState').classList.remove('hidden');
         }
 
+        function openImageModal(src) {
+            document.getElementById('zoomedImage').src = src;
+            document.getElementById('imageModal').style.display = 'flex';
+        }
+
         async function registerServiceWorker() {
             if ('serviceWorker' in navigator) {
                 try {
-                    const reg = await navigator.serviceWorker.register('/bona/sw.js', { scope: '/bona/' });
-                    return reg;
-                } catch (e) {
-                    console.error('SW Error:', e);
-                }
+                    return await navigator.serviceWorker.register('/bona/sw.js', { scope: '/bona/' });
+                } catch (e) { console.error('SW Error:', e); }
             }
             return null;
         }
@@ -443,29 +533,44 @@
             const reg = await registerServiceWorker();
             if (!reg) return alert('서비스 워커 등록 실패');
 
+            // Kakao Check
+            const ua = navigator.userAgent.toUpperCase();
+            if (ua.includes('KAKAOTALK')) {
+                document.getElementById('kakaoGuide').style.display = 'block';
+            }
+
+            const permission = await Notification.requestPermission();
+            if (permission === 'denied') {
+                const guide = document.getElementById('notifGuide');
+                document.getElementById('notifGuideText').innerHTML = '🚫 알림 권한이 차단되어 있습니다.<br><strong>[설정 > 사이트 설정 > 초기화]</strong> 후<br>다시 시도해주세요.';
+                guide.style.display = 'block';
+                return;
+            }
+            if (permission !== 'granted') {
+                const guide = document.getElementById('notifGuide');
+                document.getElementById('notifGuideText').innerHTML = '매일아침 매일미사 묵상시를 받으시려면<br>알림 설정을 해주세요.';
+                guide.style.display = 'block';
+                return;
+            }
+
             try {
                 const sub = await reg.pushManager.subscribe({
                     userVisibleOnly: true,
                     applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
                 });
-
                 await fetch('/bona/studio/api/subscribe', {
                     method: 'POST',
                     body: JSON.stringify(sub),
                     headers: { 'Content-Type': 'application/json' }
                 });
-
                 alert('✅ 구독 완료! 매일 아침 묵상 카드를 받으실 수 있습니다.');
-                document.getElementById('subscribeBtn').innerHTML = '<i class="fa-solid fa-check"></i> 구독 완료';
-                document.getElementById('subscribeBtn').disabled = true;
+                const btn = document.getElementById('subscribeBtn');
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> 구독 완료';
+                btn.disabled = true;
             } catch (e) {
-                console.error(e);
-                showNotifModal();
+                alert('구독 중 오류가 발생했습니다.');
             }
         }
-
-        function showNotifModal() { document.getElementById('notifHelpModal').style.display = 'flex'; }
-        function closeNotifModal() { document.getElementById('notifHelpModal').style.display = 'none'; }
 
         function urlBase64ToUint8Array(base64String) {
             const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -489,21 +594,13 @@
             };
 
             try {
-                if (navigator.share) {
-                    await navigator.share(shareData);
-                } else {
+                if (navigator.share) await navigator.share(shareData);
+                else {
                     await navigator.clipboard.writeText(currentUrl);
-                    alert('✅ 링크가 복사되었습니다!\n카카오톡이나 문자로 붙여넣기 하세요.');
+                    alert('✅ 링크가 복사되었습니다!');
                 }
             } catch (err) {
-                if (err.name !== 'AbortError') {
-                    try {
-                        await navigator.clipboard.writeText(currentUrl);
-                        alert('✅ 링크가 복사되었습니다!\n카카오톡이나 문자로 붙여넣기 하세요.');
-                    } catch (clipErr) {
-                        alert('❌ 공유 기능을 사용할 수 없습니다.');
-                    }
-                }
+                // Ignore abort errors
             }
         }
 
