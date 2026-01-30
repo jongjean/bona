@@ -318,10 +318,30 @@
         </div>
     </div>
 
-    <div id="kakaoGuide" class="kakao-guide">
-        <p><span style="color: #b8860b;">✠</span> 알림 설정을 위해 <strong>[다른 브라우저로 열기]</strong>를 해주세요.</p>
-        <button onclick="this.parentElement.style.display='none'"
-            style="margin-top:10px; background:none; border:1px solid #555; color:#888; padding:5px 12px; border-radius:20px; font-size:0.8rem;">닫기</button>
+    <!-- Kakao Guide (Polite Modal) -->
+    <div id="kakaoGuide" class="modal-overlay hidden" onclick="if(event.target === this) this.classList.add('hidden')">
+        <div class="modal-card" style="border-color: #b8860b; padding: 2.2rem 1.5rem;">
+            <div style="font-size: 2.5rem; margin-bottom: 1.2rem;">✠</div>
+            <h3 style="color: #b8860b; margin-bottom: 1rem; font-size: 1.1rem; line-height: 1.5;">알림 설정 제약 안내</h3>
+            <p style="margin-bottom: 1.8rem; line-height: 1.7; font-size: 0.9rem; color: #eee; word-break: keep-all;">
+                죄송합니다. 카카오톡 안에서는<br>시스템 제약으로 알림 기능을 사용할 수 없습니다.<br><br>
+                번거로우시겠지만 <strong>아래 방법</strong>으로<br>구독을 완료해 주시면 감사하겠습니다.
+            </p>
+
+            <div
+                style="background: rgba(184, 134, 11, 0.1); border: 1px dashed #b8860b; border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem; text-align: left;">
+                <p style="font-size: 0.85rem; color: #fff; line-height: 1.7;">
+                    1. 화면을 아래로 <strong>살짝 쓸어내리기</strong><br>
+                    2. 우측 하단 <strong>세로 점 3개(⋮)</strong> 클릭<br>
+                    3. <strong>[다른 브라우저로 열기]</strong> 선택
+                </p>
+            </div>
+
+            <button onclick="document.getElementById('kakaoGuide').classList.add('hidden')"
+                style="width: 100%; background: #b8860b; color: #fff; border: none; padding: 0.8rem; border-radius: 30px; font-size: 0.9rem; font-weight: bold; cursor: pointer;">
+                확인했습니다
+            </button>
+        </div>
     </div>
 
     <!-- Main Content -->
@@ -410,6 +430,7 @@
 
         function closeLandingModal() {
             document.getElementById('landingModal').classList.add('hidden');
+            // [정상화] 사용자 배려를 위해 24시간에서 72시간으로 안보기 유예 연장
             localStorage.setItem('bona_modal_dismissed', new Date().toISOString());
         }
 
@@ -435,13 +456,34 @@
                 });
 
                 localStorage.setItem('bona_subscribed', 'true');
+
+                // 모든 구독 관련 버튼 상태 동기화
+                const subBtns = ['cardSubBtn', 'mainSubBtn'];
+                subBtns.forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (btn) {
+                        btn.textContent = '구독 완료';
+                        btn.disabled = true;
+                    }
+                });
+
                 alert('✅ 구독 신청이 완료되었습니다!');
                 closeLandingModal();
-                document.getElementById('cardSubBtn').textContent = '구독 완료';
-                document.getElementById('cardSubBtn').disabled = true;
             } catch (e) {
                 console.error(e);
-                alert('연결이 원활하지 않습니다. 잠시 후 다시 시도해주세요.');
+
+                if (navigator.userAgent.includes('KAKAOTALK')) {
+                    // 카톡에서는 에러 알림 대신 전용 안내 모달 노출
+                    document.getElementById('kakaoGuide').classList.remove('hidden');
+                    return;
+                }
+
+                if (localStorage.getItem('bona_subscribed') === 'true') {
+                    alert('이미 구독 신청이 완료된 상태입니다. 매일 아침 찾아뵙겠습니다. ✠');
+                    closeLandingModal();
+                } else {
+                    alert('연결이 원활하지 않습니다. 잠시 후 다시 시도해주세요.');
+                }
             }
         }
 
@@ -480,27 +522,49 @@
             } catch (e) { }
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
             initContent();
-            const isSubscribed = localStorage.getItem('bona_subscribed') === 'true';
-            if (isSubscribed) {
-                document.getElementById('cardSubBtn').textContent = '구독 완료';
-                document.getElementById('cardSubBtn').disabled = true;
+
+            // [정상화] 단순히 권한 여부만 보는 게 아니라, 실제 전송 통로(Subscription)가 살아있는지 정밀 검사
+            let isRelayActive = false;
+            try {
+                const reg = await navigator.serviceWorker.ready;
+                const sub = await reg.pushManager.getSubscription();
+                isRelayActive = !!sub;
+            } catch (e) { }
+
+            const hasPermission = (Notification.permission === 'granted');
+            const localSubscribed = localStorage.getItem('bona_subscribed') === 'true';
+
+            // 실제 통로가 살아있고 권한도 있는 경우에만 '완료'로 표시
+            if (isRelayActive && hasPermission) {
+                const subBtns = ['cardSubBtn', 'mainSubBtn'];
+                subBtns.forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (btn) {
+                        btn.textContent = '구독 완료';
+                        btn.disabled = true;
+                    }
+                });
             } else {
+                // 기록은 있으나 통로가 끊겼거나 권한이 없는 경우 (불일치 상태)
+                if (localSubscribed) {
+                    // 과감하게 기록을 지워 버튼을 다시 활성화 (재구독 기회 부여)
+                    localStorage.removeItem('bona_subscribed');
+                }
+
                 const dismissedAt = localStorage.getItem('bona_modal_dismissed');
                 const hoursSinceDismissed = dismissedAt ? (new Date() - new Date(dismissedAt)) / (1000 * 60 * 60) : 999;
-                const urlParams = new URLSearchParams(window.location.search);
-                const isPassiveVisitor = urlParams.has('p') || urlParams.has('prayer') || urlParams.has('date');
+                const isKakao = navigator.userAgent.includes('KAKAOTALK');
 
-                if (hoursSinceDismissed > 24 && !isPassiveVisitor) {
+                if (hoursSinceDismissed > 72 && !isKakao) {
                     setTimeout(() => {
                         document.getElementById('landingModal').classList.remove('hidden');
-                    }, 3000);
+                    }, 60000);
                 }
             }
-            if (navigator.userAgent.includes('KAKAOTALK')) {
-                document.getElementById('kakaoGuide').style.display = 'block';
-            }
+
+            // [정상화] 버튼 리스너 등록
             document.getElementById('mainSubBtn').addEventListener('click', subscribeUser);
             document.getElementById('cardSubBtn').addEventListener('click', subscribeUser);
             document.getElementById('shareBtn').addEventListener('click', share);

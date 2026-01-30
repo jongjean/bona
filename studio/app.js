@@ -406,7 +406,7 @@ app.get('/studio/api/gospel/:date?', async (req, res) => {
 });
 
 // API: Subscribe (구독 신청)
-app.post('/studio/api/subscribe', (req, res) => {
+app.post('/studio/api/subscribe', async (req, res) => {
     const subscription = req.body;
     let subs = [];
 
@@ -414,13 +414,41 @@ app.post('/studio/api/subscribe', (req, res) => {
         if (fs.existsSync(SUBS_FILE)) {
             subs = JSON.parse(fs.readFileSync(SUBS_FILE));
         }
+
         // 중복 체크 (endpoint 기준)
-        if (!subs.find(s => s.endpoint === subscription.endpoint)) {
+        const isNew = !subs.find(s => s.endpoint === subscription.endpoint);
+
+        if (isNew) {
             subs.push(subscription);
             fs.writeFileSync(SUBS_FILE, JSON.stringify(subs, null, 2));
             console.log(`[Subscribe] New subscriber added. Total: ${subs.length}`);
+
+            // [사용자 요청] 구독 즉시 당일 카드 발송 (Welcome Push)
+            const offset = 1000 * 60 * 60 * 9; // KST
+            const todayKST = new Date(Date.now() + offset).toISOString().split('T')[0];
+            const draftFile = path.join(DATA_DIR, `draft_${todayKST}.json`);
+
+            if (fs.existsSync(draftFile)) {
+                try {
+                    const draft = JSON.parse(fs.readFileSync(draftFile));
+                    const content = draft.content || draft;
+
+                    const welcomePayload = JSON.stringify({
+                        title: '환영합니다! 오늘의 묵상입니다.',
+                        body: content.one_line_message || '오늘의 말씀이 도착했습니다.',
+                        url: `https://uconai.ddns.net/bona/${todayKST}.html`
+                    });
+
+                    console.log(`[Subscribe] Sending welcome push to new subscriber...`);
+                    webpush.sendNotification(subscription, welcomePayload)
+                        .catch(err => console.error('[WelcomePush] Failed:', err.statusCode));
+                } catch (pe) {
+                    console.error('[WelcomePush] Data Error:', pe);
+                }
+            }
         }
-        res.status(201).json({ success: true });
+
+        res.status(201).json({ success: true, isNew });
     } catch (e) {
         console.error('[Subscribe Error]', e);
         res.status(500).json({ error: e.message });
@@ -448,8 +476,18 @@ app.get('/studio/api/subscribers', (req, res) => {
 
 // [3.3] API: Manual Deployment Trigger
 app.post('/studio/api/deploy', async (req, res) => {
-    const result = await deployToWebFolder();
-    res.json(result);
+    console.log(`[Deploy API] 수동 배포 및 7일분 선행 생성 트리거됨`);
+    try {
+        // 당일 포함 일주일치 루프
+        for (let i = 0; i <= 7; i++) {
+            const futureDate = new Date(Date.now() + (9 * 60 * 60 * 1000) + (i * 24 * 60 * 60 * 1000));
+            const futureDateStr = futureDate.toISOString().split('T')[0];
+            await deployToWebFolder(futureDateStr);
+        }
+        res.json({ success: true, message: '오늘 포함 7일분 정적 배포가 완료되었습니다.' });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
 });
 
 const ADMIN_SUB_FILE = path.join(DATA_DIR, 'admin_sub.json');
@@ -514,8 +552,8 @@ app.post('/studio/api/publish', async (req, res) => {
         const notificationPayload = JSON.stringify({
             title: isTest ? '[TEST] Good Morning Bona' : 'Good Morning Bona',
             body: data.one_line_message || '오늘의 묵상이 도착했습니다.',
-            // icon은 서버에 실제 파일이 있을 때만 사용 (PC 크롬 404 차단 방지)
-            url: `https://uconai.ddns.net/bona/?date=${date}`
+            // [V0.5 개선] 정적 파일 직접 연결로 SNS 미리보기(OG) 최적화
+            url: `https://uconai.ddns.net/bona/${date}.html`
         });
 
         console.log(`[Push] Sending to ${targetName} (${subs.length})...`);
@@ -526,7 +564,10 @@ app.post('/studio/api/publish', async (req, res) => {
             })
         );
 
-        await Promise.all(sendPromises);
+        // 3. [Data Baking] 정적 파일 즉시 생성 (시험발송 시에도 미래 파일 생성)
+        console.log(`[Publish] Triggering static deployment for ${date}...`);
+        await deployToWebFolder(date);
+
         res.json({ success: true, subscriberCount: subs.length, isTest });
 
     } catch (e) {
@@ -540,18 +581,20 @@ app.post('/studio/api/publish', async (req, res) => {
  * [5.2] 배포 엔진: 정적 데이터 주입(Baking) 및 독립형 배포
  * 사용자 설계 원칙: "파일 하나만으로 완벽한 서비스가 가능한 자기완결적 웹폴더 구축"
  */
-async function deployToWebFolder() {
+async function deployToWebFolder(specificDate = null) {
     const { execSync } = require('child_process');
     const sourceDir = path.join(__dirname, 'public/');
     const templatePath = path.join(__dirname, 'public/template.html');
     const destDir = '/var/www/bona/';
     const tempDir = '/var/www/bona_new/';
 
-    // 오늘 날짜 (KST 기준)
+    // 기준 날짜 설정 (KST 기준)
     const offset = 1000 * 60 * 60 * 9;
-    const targetDate = new Date(Date.now() + offset).toISOString().split('T')[0];
+    const todayKST = new Date(Date.now() + offset).toISOString().split('T')[0];
+    const targetDate = specificDate || todayKST;
+    const isToday = (targetDate === todayKST);
 
-    console.log(`[Deployer] 정적 무결성 배포 시작 (날짜: ${targetDate})`);
+    console.log(`[Deployer] 정적 무결성 배포 시작 (대상: ${targetDate}, 오늘여부: ${isToday})`);
 
     try {
         if (!destDir.startsWith('/var/www/bona')) {
@@ -565,7 +608,7 @@ async function deployToWebFolder() {
         // 2. 기본 리소스 복사 (uploads, css, js 등)
         execSync(`cp -r ${sourceDir}* ${tempDir}`);
 
-        // 3. [Data Baking] 오늘의 데이터를 템플릿에 구워넣기
+        // 3. [Data Baking] 해당 날짜의 데이터를 템플릿에 구워넣기
         const dataPath = path.join(DATA_DIR, `draft_${targetDate}.json`);
         if (fs.existsSync(dataPath) && fs.existsSync(templatePath)) {
             console.log(`[Deployer] '${targetDate}' 데이터를 정적 파일에 굽는 중...`);
@@ -583,30 +626,29 @@ async function deployToWebFolder() {
             template = template.replace('{{OG_IMAGE}}', content.generated_image_url ? `https://uconai.ddns.net/bona${content.generated_image_url.includes('/uploads/') ? '/uploads/' + content.generated_image_url.split('/uploads/')[1] : content.generated_image_url}` : 'https://uconai.ddns.net/bona/logo.png');
             template = template.replace('{{OG_URL}}', `https://uconai.ddns.net/bona/${targetDate}.html`);
 
-            // A. 메인 페이지용(index.html)으로 저장
-            fs.writeFileSync(path.join(tempDir, 'index.html'), template);
-
-            // B. 영구 보존용(YYYY-MM-DD.html)으로 저장
+            // A. 영구 보존용(YYYY-MM-DD.html)으로 저장
             fs.writeFileSync(path.join(tempDir, `${targetDate}.html`), template);
 
-            console.log(`[Deployer] 정적 파일 생성 완료: index.html, ${targetDate}.html`);
+            // B. 오늘 날짜인 경우에만 메인 페이지(index.html) 업데이트
+            if (isToday) {
+                fs.writeFileSync(path.join(tempDir, 'index.html'), template);
+                console.log(`[Deployer] 오늘자 index.html 업데이트 포함 완료`);
+            } else {
+                console.log(`[Deployer] 미래/과거 날짜 아카이브 파일만 생성 (${targetDate}.html)`);
+            }
         } else {
             console.warn(`[Deployer] 데이터나 템플릿이 없어 Baking을 건너뜁니다.`);
         }
 
-        // 4. 기존 폴더 교체 (기존 아카이브 파일들을 살리기 위해 주의 깊게 병합)
+        // 4. 기존 폴더 교체 (merge 방식)
         console.log(`[Deployer] 웹 서비스 창구 최신화 중...`);
-        // 기존 아카이브 파일들을 유지하기 위해 'cp -n' 대신 필요한 것만 덮어쓰거나 rsync-like하게 작동
-        // 여기서는 사용자님의 "매일 비우고 채우기" 원칙을 유지하되 과거 HTML은 보존하는 정책 적용
-
-        // 일단 새 파일들을 목적지로 이동/덮어쓰기
         execSync(`cp -r ${tempDir}* ${destDir}`);
 
         // 5. 뒷정리 및 권한
         if (fs.existsSync(tempDir)) execSync(`rm -rf ${tempDir}`);
         execSync(`chown -R ucon:ucon ${destDir}`);
 
-        console.log(`[Deployer] 배포 성공! 이제 엔진 없이도 서비스가 가능한 상태입니다.`);
+        console.log(`[Deployer] 배포 성공: ${targetDate} 카드가 정적 파일로 준비되었습니다.`);
         return { success: true };
     } catch (error) {
         console.error(`[Deployer] 배포 중 심각한 오류 발생:`, error.message);
@@ -648,7 +690,7 @@ setInterval(async () => {
                     const payload = JSON.stringify({
                         title: content.one_line_message || '오늘의 묵상',
                         body: content.meditation_body ? content.meditation_body.substring(0, 30) + '...' : '오늘의 말씀이 도착했습니다.',
-                        url: `/bona/?date=${dateStr}`
+                        url: `/bona/${dateStr}.html`
                     });
 
                     console.log(`[Scheduler] Auto-publishing to ${subs.length} subscribers...`);
@@ -672,9 +714,18 @@ setInterval(async () => {
                 // 발송 완료 마킹
                 lastAutoPublishDate = dateStr;
 
-                // [3.2] 매일 아침 6시 웹 폴더 자동 동기화 (설계 원칙 반영)
-                console.log(`[Scheduler] 자동 배포 시작...`);
-                await deployToWebFolder();
+                // [3.2] 매일 아침 6시 웹 폴더 자동 동기화 (당일 및 향후 7일분 미리 생성)
+                console.log(`[Scheduler] 자동 배포 및 향후 7일분 선행 생성 시작...`);
+
+                // 당일 포함 일주일치 루프
+                for (let i = 0; i <= 7; i++) {
+                    const futureDate = new Date(Date.now() + (9 * 60 * 60 * 1000) + (i * 24 * 60 * 60 * 1000));
+                    const futureDateStr = futureDate.toISOString().split('T')[0];
+                    console.log(`[Scheduler] Pre-baking card for: ${futureDateStr}`);
+                    await deployToWebFolder(futureDateStr);
+                }
+
+                console.log(`[Scheduler] 전체 배포 프로세스 완료.`);
             } else {
                 console.log(`[Scheduler] No draft found for ${dateStr}. Skipping.`);
                 lastAutoPublishDate = dateStr; // 파일 없어도 재시도 멈춤 (내일 다시)
