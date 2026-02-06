@@ -533,6 +533,11 @@ app.post('/studio/api/publish', async (req, res) => {
             return res.json({ success: true, message: 'Draft saved successfully.' });
         }
 
+        // 3. [Data Baking] 정적 파일 즉시 생성 (알림 발송 전에 파일이 준비되어야 함)
+        console.log(`[Publish] Triggering static deployment for ${date}...`);
+        await deployToWebFolder(date);
+
+        // 4. 구독자 추출 및 알림 발송
         let subs = [];
         let targetName = 'All Subscribers';
 
@@ -551,8 +556,8 @@ app.post('/studio/api/publish', async (req, res) => {
 
         const notificationPayload = JSON.stringify({
             title: isTest ? '[TEST] Good Morning Bona' : 'Good Morning Bona',
-            body: data.one_line_message || '오늘의 묵상이 도착했습니다.',
-            // [V0.5 개선] 정적 파일 직접 연결로 SNS 미리보기(OG) 최적화
+            body: data.prayer_line || data.one_line_message || '오늘의 묵상이 도착했습니다.',
+            // [V0.5 핵심] 무조건 파라미터가 없는 깨끗한 정적 파일 주소만 보냅니다.
             url: `https://uconai.ddns.net/bona/${date}.html`
         });
 
@@ -563,10 +568,6 @@ app.post('/studio/api/publish', async (req, res) => {
                 console.error(`[Push Fail] ${err.statusCode}`);
             })
         );
-
-        // 3. [Data Baking] 정적 파일 즉시 생성 (시험발송 시에도 미래 파일 생성)
-        console.log(`[Publish] Triggering static deployment for ${date}...`);
-        await deployToWebFolder(date);
 
         res.json({ success: true, subscriberCount: subs.length, isTest });
 
@@ -622,8 +623,16 @@ async function deployToWebFolder(specificDate = null) {
             template = template.replace(/\{\{\s*BONA_DATA_JSON\s*\}\}/g, JSON.stringify(content));
             // SEO Meta 주입
             template = template.replace(/\{\{\s*OG_TITLE\s*\}\}/g, content.one_line_message || 'Good Morning Bona');
-            template = template.replace('{{OG_DESCRIPTION}}', content.meditation_body ? content.meditation_body.substring(0, 100) + '...' : '(가톨릭) 매일아침 매일미사 복음묵상');
+
+            // [개선] 묵상 시(Poem)보다는 화살기도(Prayer)가 카드 설명에서 더 중요하므로 우선적으로 반영
+            const cardDesc = content.prayer_line
+                ? `${content.prayer_line} | ${content.meditation_body?.substring(0, 50)}...`
+                : (content.meditation_body ? content.meditation_body.substring(0, 100) + '...' : '(가톨릭) 매일아침 매일미사 복음묵상');
+
+            template = template.replace('{{OG_DESCRIPTION}}', cardDesc);
             template = template.replace('{{OG_IMAGE}}', content.generated_image_url ? `https://uconai.ddns.net/bona${content.generated_image_url.includes('/uploads/') ? '/uploads/' + content.generated_image_url.split('/uploads/')[1] : content.generated_image_url}` : 'https://uconai.ddns.net/bona/logo.png');
+
+            // [핵심] 카카오톡에서 긴 주소를 숨겨주는 '공식 명찰'. 파라미터가 없는 순수 날짜 주소만 주입합니다.
             template = template.replace('{{OG_URL}}', `https://uconai.ddns.net/bona/${targetDate}.html`);
 
             // A. 영구 보존용(YYYY-MM-DD.html)으로 저장

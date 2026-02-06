@@ -772,9 +772,8 @@
                         return;
                     }
 
-                    console.log('[AdminReg] 서비스 워커 등록 중...');
-                    // 스튜디오 폴더 내의 sw.js를 사용하여 범위(scope) 문제를 해결
-                    const reg = await navigator.serviceWorker.register('/studio/sw.js');
+                    console.log('[AdminReg] 서비스 워커 등록 중 (v1.0.1)...');
+                    const reg = await navigator.serviceWorker.register('/studio/sw.js?v=1.0.1');
                     await navigator.serviceWorker.ready;
                     console.log('[AdminReg] 서비스 워커 준비 완료');
 
